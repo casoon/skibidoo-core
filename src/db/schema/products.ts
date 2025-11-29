@@ -137,3 +137,42 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
     references: [categories.id],
   }),
 }));
+
+
+// Delivery time relations
+export const deliveryTimesRelations = relations(deliveryTimes, ({ many }) => ({
+  translations: many(deliveryTimeTranslations),
+  products: many(products),
+}));
+
+export const deliveryTimeTranslationsRelations = relations(deliveryTimeTranslations, ({ one }) => ({
+  deliveryTime: one(deliveryTimes, {
+    fields: [deliveryTimeTranslations.deliveryTimeId],
+    references: [deliveryTimes.id],
+  }),
+}));
+
+export const categoryTranslationsRelations = relations(categoryTranslations, ({ one }) => ({
+  category: one(categories, {
+    fields: [categoryTranslations.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const productTranslationsRelations = relations(productTranslations, ({ one }) => ({
+  product: one(products, {
+    fields: [productTranslations.productId],
+    references: [products.id],
+  }),
+}));
+
+export const productCategoriesRelations = relations(productCategories, ({ one }) => ({
+  product: one(products, {
+    fields: [productCategories.productId],
+    references: [products.id],
+  }),
+  category: one(categories, {
+    fields: [productCategories.categoryId],
+    references: [categories.id],
+  }),
+}));

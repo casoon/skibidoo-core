@@ -7,6 +7,7 @@ import { shippingRouter } from "./routers/shipping";
 import { paymentRouter } from "./routers/payment";
 import { couponRouter } from "./routers/coupon";
 import { taxRouter } from "./routers/tax";
+import { deliveryTimeRouter } from "./routers/deliveryTime";
 
 export const appRouter = router({
   product: productRouter,
@@ -17,6 +18,7 @@ export const appRouter = router({
   payment: paymentRouter,
   coupon: couponRouter,
   tax: taxRouter,
+  deliveryTime: deliveryTimeRouter,
 });
 
 export type AppRouter = typeof appRouter;
