@@ -3,13 +3,14 @@ import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { requestId } from "hono/request-id";
 import { trpcServer } from "@hono/trpc-server";
-import { env, logger } from "../config/index.js";
-import { db } from "../db/index.js";
-import { appRouter, createContext } from "../trpc/index.js";
-import { productRoutes } from "./routes/products.js";
-import { categoryRoutes } from "./routes/categories.js";
-import { cartRoutes } from "./routes/cart.js";
-import { checkoutRoutes } from "./routes/checkout.js";
+import { env, logger } from "@/config";
+import { db } from "@/db";
+import { appRouter, createContext } from "@/trpc";
+import { authRoutes } from "@/auth";
+import { productRoutes } from "./routes/products";
+import { categoryRoutes } from "./routes/categories";
+import { cartRoutes } from "./routes/cart";
+import { checkoutRoutes } from "./routes/checkout";
 
 export function createApp() {
   const app = new Hono();
@@ -47,6 +48,11 @@ export function createApp() {
 
   // REST API routes for Storefront
   const api = new Hono();
+  
+  // Auth routes
+  api.route("/auth", authRoutes);
+  
+  // Public routes
   api.route("/products", productRoutes);
   api.route("/categories", categoryRoutes);
   api.route("/cart", cartRoutes);

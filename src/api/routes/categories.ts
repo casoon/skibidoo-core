@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { eq, and, isNull, asc } from "drizzle-orm";
-import { db } from "../../db/index.js";
-import { categories, categoryTranslations, productCategories, products, productTranslations } from "../../db/schema/index.js";
+import { db } from "@/db/index";
+import { categories, categoryTranslations, productCategories, products, productTranslations } from "@/db/schema/index";
 
 const router = new Hono();
 

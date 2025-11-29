@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { coupons } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { coupons } from "@/db/schema";
 
 const createCouponInput = z.object({
   code: z.string().min(3).max(100).transform((v) => v.toUpperCase()),

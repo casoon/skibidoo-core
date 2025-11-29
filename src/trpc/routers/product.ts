@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, like, desc, asc, sql } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { products, productTranslations, categories, productCategories } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { products, productTranslations, categories, productCategories } from "@/db/schema";
 
 // Input schemas
 const createProductInput = z.object({

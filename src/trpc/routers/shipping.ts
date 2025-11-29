@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, asc } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { shippingZones, shippingMethods, shippingClasses } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { shippingZones, shippingMethods, shippingClasses } from "@/db/schema";
 
 // Shipping Zones
 const createZoneInput = z.object({

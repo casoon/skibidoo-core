@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, asc } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { taxClasses, taxRates } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { taxClasses, taxRates } from "@/db/schema";
 
 // Tax Classes
 const createTaxClassInput = z.object({

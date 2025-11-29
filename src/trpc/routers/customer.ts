@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, like, desc, asc, sql } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { customers, customerAddresses, customerGroups, customerGroupMembers } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { customers, customerAddresses, customerGroups, customerGroupMembers } from "@/db/schema";
 
 const addressSchema = z.object({
   type: z.enum(["billing", "shipping"]).default("shipping"),

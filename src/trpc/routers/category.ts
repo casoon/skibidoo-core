@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { categories, categoryTranslations } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { categories, categoryTranslations } from "@/db/schema";
 
 const createCategoryInput = z.object({
   slug: z.string().min(1).max(255),

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, desc, asc, sql, gte, lte } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { orders, orderItems, orderTaxLines, invoices } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { orders, orderItems, orderTaxLines, invoices } from "@/db/schema";
 
 const addressSchema = z.object({
   company: z.string().optional(),

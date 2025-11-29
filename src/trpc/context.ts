@@ -1,5 +1,6 @@
-import type { Database } from "../db";
+import type { Database } from "@/db";
 import type { Logger } from "pino";
+import { verifyAccessToken, type TokenPayload } from "@/auth/jwt";
 
 export interface User {
   id: string;
@@ -26,10 +27,17 @@ export async function createContext(opts: CreateContextOptions): Promise<Context
   
   let user: User | null = null;
   
-  // TODO: Implement JWT verification
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
-    // user = await verifyToken(token);
+    const payload = await verifyAccessToken(token);
+    
+    if (payload) {
+      user = {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+      };
+    }
   }
   
   return {

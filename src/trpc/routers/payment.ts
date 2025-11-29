@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, asc } from "drizzle-orm";
-import { router, adminProcedure } from "../trpc";
-import { paymentMethods } from "../../db/schema";
+import { router, adminProcedure } from "@/trpc/trpc";
+import { paymentMethods } from "@/db/schema";
 
 const createPaymentMethodInput = z.object({
   slug: z.string().max(100),
