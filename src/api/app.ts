@@ -11,6 +11,7 @@ import { productRoutes } from "./routes/products";
 import { categoryRoutes } from "./routes/categories";
 import { cartRoutes } from "./routes/cart";
 import { checkoutRoutes } from "./routes/checkout";
+import { searchRoutes } from "./routes/search";
 import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/payments";
 import { invoiceRoutes } from "@/invoices";
 import { setupSwaggerUI } from "./docs/openapi";
@@ -92,6 +93,10 @@ export function createApp() {
 
   api.use("/categories/*", generalRateLimiter);
   api.route("/categories", categoryRoutes);
+
+  // Search routes - general rate limiting
+  api.use("/search/*", generalRateLimiter);
+  api.route("/search", searchRoutes);
 
   api.use("/cart/*", generalRateLimiter);
   api.route("/cart", cartRoutes);
