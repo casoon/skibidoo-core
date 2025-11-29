@@ -1,6 +1,16 @@
 import { serve } from "@hono/node-server";
-import { env, logger } from "./config/index.js";
-import { createApp } from "./api/app.js";
+import { env, logger } from "@/config";
+import { createApp } from "@/api/app";
+import { closeDatabase } from "@/db";
+import { 
+  startWorkers, 
+  stopWorkers, 
+  startScheduler as initScheduler, 
+  stopScheduler,
+  closeQueues,
+} from "@/jobs";
+
+let isShuttingDown = false;
 
 async function main() {
   const mode = env.MODE;
@@ -12,10 +22,10 @@ async function main() {
       await startApiServer();
       break;
     case "worker":
-      await startWorker();
+      await startWorkerMode();
       break;
     case "scheduler":
-      await startScheduler();
+      await startSchedulerMode();
       break;
   }
 }
@@ -32,26 +42,61 @@ async function startApiServer() {
   logger.info({ port }, "API server listening");
 }
 
-async function startWorker() {
-  logger.info("Worker mode - not yet implemented");
-  // TODO: BullMQ worker setup
+async function startWorkerMode() {
+  logger.info("Starting in worker mode");
+  
+  await startWorkers();
+  
+  logger.info("Worker mode running - processing jobs");
+  
+  // Keep process alive
+  await new Promise(() => {});
 }
 
-async function startScheduler() {
-  logger.info("Scheduler mode - not yet implemented");
-  // TODO: Cron scheduler setup
+async function startSchedulerMode() {
+  logger.info("Starting in scheduler mode");
+  
+  await initScheduler();
+  
+  // Also start workers to process scheduled jobs
+  await startWorkers();
+  
+  logger.info("Scheduler mode running - scheduling and processing jobs");
+  
+  // Keep process alive
+  await new Promise(() => {});
 }
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM received, shutting down gracefully");
-  process.exit(0);
-});
+async function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  
+  logger.info({ signal }, "Shutting down gracefully");
+  
+  try {
+    const mode = env.MODE;
+    
+    if (mode === "worker" || mode === "scheduler") {
+      await stopWorkers();
+      if (mode === "scheduler") {
+        await stopScheduler();
+      }
+      await closeQueues();
+    }
+    
+    await closeDatabase();
+    
+    logger.info("Shutdown complete");
+    process.exit(0);
+  } catch (err) {
+    logger.error({ err }, "Error during shutdown");
+    process.exit(1);
+  }
+}
 
-process.on("SIGINT", () => {
-  logger.info("SIGINT received, shutting down gracefully");
-  process.exit(0);
-});
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 main().catch((err) => {
   logger.fatal({ err }, "Failed to start");
