@@ -30,6 +30,14 @@ export const env = createEnv({
     STRIPE_PUBLIC_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
+    // SMTP / Email
+    SMTP_HOST: z.string().default("localhost"),
+    SMTP_PORT: z.coerce.number().default(1025),
+    SMTP_SECURE: z.coerce.boolean().default(false),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    SMTP_FROM: z.string().email().optional(),
+
     // URLs
     STOREFRONT_URL: z.string().url().optional(),
     ADMIN_URL: z.string().url().optional(),
