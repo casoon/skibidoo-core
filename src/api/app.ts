@@ -6,6 +6,10 @@ import { trpcServer } from "@hono/trpc-server";
 import { env, logger } from "../config/index.js";
 import { db } from "../db/index.js";
 import { appRouter, createContext } from "../trpc/index.js";
+import { productRoutes } from "./routes/products.js";
+import { categoryRoutes } from "./routes/categories.js";
+import { cartRoutes } from "./routes/cart.js";
+import { checkoutRoutes } from "./routes/checkout.js";
 
 export function createApp() {
   const app = new Hono();
@@ -42,7 +46,13 @@ export function createApp() {
   }));
 
   // REST API routes for Storefront
-  app.route("/api/v1", createRestRouter());
+  const api = new Hono();
+  api.route("/products", productRoutes);
+  api.route("/categories", categoryRoutes);
+  api.route("/cart", cartRoutes);
+  api.route("/checkout", checkoutRoutes);
+  
+  app.route("/api/v1", api);
 
   // 404 handler
   app.notFound((c) => c.json({ error: { code: "NOT_FOUND", message: "Not found" } }, 404));
@@ -57,58 +67,4 @@ export function createApp() {
   });
 
   return app;
-}
-
-function createRestRouter() {
-  const router = new Hono();
-
-  // Products (public storefront)
-  router.get("/products", async (c) => {
-    // TODO: Implement with db query
-    return c.json({ data: [], pagination: { page: 1, size: 20, total: 0, totalPages: 0 } });
-  });
-
-  router.get("/products/:slug", async (c) => {
-    const slug = c.req.param("slug");
-    // TODO: Implement with db query
-    return c.json({ error: { code: "NOT_FOUND", message: "Product not found" } }, 404);
-  });
-
-  // Categories
-  router.get("/categories", async (c) => {
-    // TODO: Implement with db query
-    return c.json({ data: [] });
-  });
-
-  router.get("/categories/:slug", async (c) => {
-    const slug = c.req.param("slug");
-    // TODO: Implement with db query
-    return c.json({ error: { code: "NOT_FOUND", message: "Category not found" } }, 404);
-  });
-
-  // Cart
-  router.post("/cart", async (c) => {
-    // Create new cart
-    return c.json({ data: { id: crypto.randomUUID(), items: [], total: 0 } }, 201);
-  });
-
-  router.get("/cart/:id", async (c) => {
-    const id = c.req.param("id");
-    // TODO: Implement
-    return c.json({ data: { id, items: [], total: 0 } });
-  });
-
-  router.post("/cart/:id/items", async (c) => {
-    const id = c.req.param("id");
-    // TODO: Implement add to cart
-    return c.json({ data: { id, items: [], total: 0 } });
-  });
-
-  // Checkout
-  router.post("/checkout", async (c) => {
-    // TODO: Implement checkout creation
-    return c.json({ data: { checkoutUrl: "/checkout" } }, 201);
-  });
-
-  return router;
 }
