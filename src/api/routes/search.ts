@@ -65,7 +65,7 @@ router.get("/", async (c) => {
     });
   } catch (error) {
     // Fallback to simple search if full-text search fails
-    const results = await searchService.simplSearch(searchQuery, locale, size);
+    const results = await searchService.simpleSearch(searchQuery, locale, size);
     
     return c.json({
       data: results.map(r => ({

@@ -69,34 +69,24 @@ export const searchService = {
 
     // Build WHERE conditions
     const conditions: string[] = ["p.status = 'active'"];
-    const params: unknown[] = [];
-    let paramIndex = 1;
 
     // Category filter
     if (categoryIds && categoryIds.length > 0) {
-      conditions.push(`p.id IN (
-        SELECT pc.product_id FROM product_categories pc
-        WHERE pc.category_id = ANY($${paramIndex}::uuid[])
-      )`);
-      params.push(categoryIds);
-      paramIndex++;
+      const categoryList = categoryIds.map(id => "'" + id + "'").join(",");
+      conditions.push("p.id IN (SELECT pc.product_id FROM product_categories pc WHERE pc.category_id IN (" + categoryList + "))");
     }
 
     // Price filters
     if (priceMin !== undefined) {
-      conditions.push(`p.price_gross >= $${paramIndex}`);
-      params.push(priceMin);
-      paramIndex++;
+      conditions.push("p.price_gross >= " + priceMin);
     }
     if (priceMax !== undefined) {
-      conditions.push(`p.price_gross <= $${paramIndex}`);
-      params.push(priceMax);
-      paramIndex++;
+      conditions.push("p.price_gross <= " + priceMax);
     }
 
     // Stock filter
     if (inStock) {
-      conditions.push(`(p.track_inventory = false OR p.stock_quantity > 0)`);
+      conditions.push("(p.track_inventory = false OR p.stock_quantity > 0)");
     }
 
     const whereClause = conditions.join(" AND ");
@@ -104,7 +94,7 @@ export const searchService = {
     // Main search query with full-text search
     const searchSQL = sql.raw(`
       WITH search_results AS (
-        SELECT 
+        SELECT
           p.id,
           p.slug,
           p.sku,
@@ -154,9 +144,11 @@ export const searchService = {
       db.execute(countSQL),
     ]);
 
-    const total = Number((countResult.rows[0] as { total: string })?.total ?? 0);
+    // db.execute returns array directly
+    const countRow = (countResult as unknown[])[0] as { total: string } | undefined;
+    const total = Number(countRow?.total ?? 0);
 
-    const mappedResults: SearchResult[] = (results.rows as unknown[]).map((row: unknown) => {
+    const mappedResults: SearchResult[] = (results as unknown[]).map((row: unknown) => {
       const r = row as {
         id: string;
         slug: string;
@@ -193,11 +185,11 @@ export const searchService = {
   },
 
   // Simple ILIKE search fallback
-  async simplSearch(query: string, locale: string = "de-DE", limit: number = 10): Promise<SearchResult[]> {
-    const searchPattern = `%${query}%`;
+  async simpleSearch(query: string, locale: string = "de-DE", limit: number = 10): Promise<SearchResult[]> {
+    const searchPattern = "%" + query + "%";
 
     const results = await db.execute(sql`
-      SELECT 
+      SELECT
         p.id,
         p.slug,
         p.sku,
@@ -212,13 +204,13 @@ export const searchService = {
           OR p.sku ILIKE ${searchPattern}
           OR pt.description ILIKE ${searchPattern}
         )
-      ORDER BY 
+      ORDER BY
         CASE WHEN pt.name ILIKE ${searchPattern} THEN 0 ELSE 1 END,
         p.created_at DESC
       LIMIT ${limit}
     `);
 
-    return (results.rows as unknown[]).map((row: unknown) => {
+    return (results as unknown[]).map((row: unknown) => {
       const r = row as {
         id: string;
         slug: string;
@@ -244,7 +236,7 @@ export const searchService = {
   async autocomplete(query: string, locale: string = "de-DE", limit: number = 5): Promise<string[]> {
     if (query.length < 2) return [];
 
-    const searchPattern = `${query}%`;
+    const searchPattern = query + "%";
 
     const results = await db.execute(sql`
       SELECT DISTINCT pt.name
@@ -257,7 +249,7 @@ export const searchService = {
       LIMIT ${limit}
     `);
 
-    return (results.rows as { name: string }[]).map(r => r.name);
+    return (results as unknown[]).map((r) => (r as { name: string }).name);
   },
 
   // Get search suggestions based on popular searches or products
@@ -272,6 +264,6 @@ export const searchService = {
       LIMIT ${limit}
     `);
 
-    return (results.rows as { name: string }[]).map(r => r.name);
+    return (results as unknown[]).map((r) => (r as { name: string }).name);
   },
 };
