@@ -1,3 +1,7 @@
+// Initialize tracing before other imports
+import { initTracing, shutdownTracing } from "@/telemetry";
+initTracing();
+
 import { serve } from "@hono/node-server";
 import { env, logger } from "@/config";
 import { createApp } from "@/api/app";
@@ -85,6 +89,7 @@ async function shutdown(signal: string) {
       await closeQueues();
     }
     
+    await shutdownTracing();
     await closeDatabase();
     
     logger.info("Shutdown complete");
