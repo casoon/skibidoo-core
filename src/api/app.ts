@@ -13,6 +13,7 @@ import { cartRoutes } from "./routes/cart";
 import { checkoutRoutes } from "./routes/checkout";
 import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/payments";
 import { invoiceRoutes } from "@/invoices";
+import { setupSwaggerUI } from "./docs/openapi";
 
 export function createApp() {
   const app = new Hono();
@@ -36,6 +37,9 @@ export function createApp() {
   app.get("/health/ready", async (c) => {
     return c.json({ status: "ready" });
   });
+
+  // API Documentation (Swagger UI)
+  setupSwaggerUI(app);
 
   // Stripe webhooks (before body parsing middleware)
   app.route("/webhooks", stripeWebhookRoutes);
