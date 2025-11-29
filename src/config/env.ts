@@ -42,6 +42,9 @@ export const env = createEnv({
     STOREFRONT_URL: z.string().url().optional(),
     ADMIN_URL: z.string().url().optional(),
 
+    // CORS
+    CORS_ORIGINS: z.string().optional(),
+
     // Logging
     LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
   },

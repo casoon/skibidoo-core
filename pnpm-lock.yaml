@@ -38,6 +38,9 @@ importers:
       hono:
         specifier: ^4.6.0
         version: 4.10.7
+      hono-rate-limiter:
+        specifier: ^0.4.2
+        version: 0.4.2(hono@4.10.7)
       ioredis:
         specifier: ^5.4.0
         version: 5.8.2
@@ -2105,6 +2108,11 @@ packages:
 
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
+
+  hono-rate-limiter@0.4.2:
+    resolution: {integrity: sha512-AAtFqgADyrmbDijcRTT/HJfwqfvhalya2Zo+MgfdrMPas3zSMD8SU03cv+ZsYwRU1swv7zgVt0shwN059yzhjw==}
+    peerDependencies:
+      hono: ^4.1.1
 
   hono@4.10.7:
     resolution: {integrity: sha512-icXIITfw/07Q88nLSkB9aiUrd8rYzSweK681Kjo/TSggaGbOX4RRyxxm71v+3PC8C/j+4rlxGeoTRxQDkaJkUw==}
@@ -5030,6 +5038,10 @@ snapshots:
   he@1.2.0: {}
 
   help-me@5.0.0: {}
+
+  hono-rate-limiter@0.4.2(hono@4.10.7):
+    dependencies:
+      hono: 4.10.7
 
   hono@4.10.7: {}
 

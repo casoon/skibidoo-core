@@ -14,6 +14,13 @@ import { checkoutRoutes } from "./routes/checkout";
 import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/payments";
 import { invoiceRoutes } from "@/invoices";
 import { setupSwaggerUI } from "./docs/openapi";
+import {
+  generalRateLimiter,
+  authRateLimiter,
+  checkoutRateLimiter,
+  webhookRateLimiter,
+  apiSecurityHeaders,
+} from "./middleware";
 
 export function createApp() {
   const app = new Hono();
@@ -23,28 +30,37 @@ export function createApp() {
     registerDefaultHandlers();
   }
 
-  // Middleware
+  // Global Middleware
   app.use("*", requestId());
-  app.use("*", cors());
+  app.use("*", cors({
+    origin: env.CORS_ORIGINS?.split(",") || ["http://localhost:4321", "http://localhost:4322"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    exposeHeaders: ["X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
+    credentials: true,
+  }));
 
+  // Security headers for all responses
+  app.use("*", apiSecurityHeaders);
+
+  // Development logging
   if (env.NODE_ENV === "development") {
     app.use("*", honoLogger());
   }
 
-  // Health check
+  // Health check (no rate limiting)
   app.get("/health", (c) => c.json({ status: "ok", mode: env.MODE }));
+  app.get("/health/ready", async (c) => c.json({ status: "ready" }));
 
-  app.get("/health/ready", async (c) => {
-    return c.json({ status: "ready" });
-  });
-
-  // API Documentation (Swagger UI)
+  // API Documentation (Swagger UI) - no rate limiting in dev
   setupSwaggerUI(app);
 
-  // Stripe webhooks (before body parsing middleware)
+  // Stripe webhooks - special rate limiting
+  app.use("/webhooks/*", webhookRateLimiter);
   app.route("/webhooks", stripeWebhookRoutes);
 
-  // tRPC routes for Admin API
+  // tRPC routes for Admin API - general rate limiting
+  app.use("/trpc/*", generalRateLimiter);
   app.use("/trpc/*", trpcServer({
     router: appRouter,
     createContext: async ({ req }) => {
@@ -62,22 +78,34 @@ export function createApp() {
   // REST API routes
   const api = new Hono();
 
-  // Customer auth routes
+  // Auth routes - strict rate limiting
+  api.use("/auth/*", authRateLimiter);
   api.route("/auth", authRoutes);
 
-  // Admin auth routes
+  // Admin auth routes - strict rate limiting
+  api.use("/admin/auth/*", authRateLimiter);
   api.route("/admin/auth", adminAuthRoutes);
 
-  // Public storefront routes
+  // Public storefront routes - general rate limiting
+  api.use("/products/*", generalRateLimiter);
   api.route("/products", productRoutes);
+
+  api.use("/categories/*", generalRateLimiter);
   api.route("/categories", categoryRoutes);
+
+  api.use("/cart/*", generalRateLimiter);
   api.route("/cart", cartRoutes);
+
+  // Checkout - moderate rate limiting
+  api.use("/checkout/*", checkoutRateLimiter);
   api.route("/checkout", checkoutRoutes);
 
-  // Payment routes
+  // Payment routes - checkout rate limiting
+  api.use("/payments/*", checkoutRateLimiter);
   api.route("/payments", paymentRoutes);
 
-  // Invoice routes
+  // Invoice routes - general rate limiting
+  api.use("/invoices/*", generalRateLimiter);
   api.route("/invoices", invoiceRoutes);
 
   app.route("/api/v1", api);
