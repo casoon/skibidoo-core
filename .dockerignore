@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Test
+coverage
+.nyc_output
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+*.md
+docs
+
+# Misc
+.editorconfig
+.eslintrc*
+.prettierrc*
+tsconfig*.json
+vitest.config.*
+drizzle.config.*

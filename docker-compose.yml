@@ -1,0 +1,83 @@
+# Docker Compose for local testing
+# Usage: docker compose up -d
+
+services:
+  # API Server
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      MODE: api
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: info
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Worker (job processing)
+  worker:
+    build: .
+    environment:
+      MODE: worker
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: info
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # Scheduler (cron + job processing)
+  scheduler:
+    build: .
+    environment:
+      MODE: scheduler
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: info
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # PostgreSQL (local development only)
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: skibidoo
+      POSTGRES_PASSWORD: skibidoo
+      POSTGRES_DB: skibidoo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Redis (local development only)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+  redis_data:
