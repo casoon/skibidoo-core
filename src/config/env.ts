@@ -22,11 +22,17 @@ export const env = createEnv({
 
     // Auth
     JWT_SECRET: z.string().min(32),
+    JWT_REFRESH_SECRET: z.string().min(32).optional(),
     JWT_EXPIRY: z.coerce.number().default(3600),
 
     // Stripe
     STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_PUBLIC_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+    // URLs
+    STOREFRONT_URL: z.string().url().optional(),
+    ADMIN_URL: z.string().url().optional(),
 
     // Logging
     LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),

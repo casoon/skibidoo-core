@@ -1,2 +1,2 @@
-export { env, type Env } from "./env.js";
-export { logger, type Logger } from "./logger.js";
+export { env } from "./env";
+export { logger } from "./logger";
