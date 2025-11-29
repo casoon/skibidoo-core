@@ -11,6 +11,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.13.0
         version: 1.19.6(hono@4.10.7)
+      '@hono/trpc-server':
+        specifier: ^0.4.0
+        version: 0.4.0(@trpc/server@11.7.2(typescript@5.9.3))(hono@4.10.7)
       '@t3-oss/env-core':
         specifier: ^0.11.0
         version: 0.11.1(typescript@5.9.3)(zod@3.25.76)
@@ -840,6 +843,13 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@hono/trpc-server@0.4.0':
+    resolution: {integrity: sha512-LGlJfCmNIGMwcknZEIYdujVMs9OkNVazhpOhaz3kTWOXvNL660VOHpvvktosCiJrajyBY1RtIJKQ+IKaQvNuSg==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@trpc/server': ^10.10.0 || >11.0.0-rc
+      hono: '>=4.*'
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -2394,6 +2404,11 @@ snapshots:
 
   '@hono/node-server@1.19.6(hono@4.10.7)':
     dependencies:
+      hono: 4.10.7
+
+  '@hono/trpc-server@0.4.0(@trpc/server@11.7.2(typescript@5.9.3))(hono@4.10.7)':
+    dependencies:
+      '@trpc/server': 11.7.2(typescript@5.9.3)
       hono: 4.10.7
 
   '@humanfs/core@0.19.1': {}
