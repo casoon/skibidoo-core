@@ -6,7 +6,7 @@ import { trpcServer } from "@hono/trpc-server";
 import { env, logger } from "@/config";
 import { db } from "@/db";
 import { appRouter, createContext } from "@/trpc";
-import { authRoutes } from "@/auth";
+import { authRoutes, adminAuthRoutes } from "@/auth";
 import { productRoutes } from "./routes/products";
 import { categoryRoutes } from "./routes/categories";
 import { cartRoutes } from "./routes/cart";
@@ -46,13 +46,16 @@ export function createApp() {
     },
   }));
 
-  // REST API routes for Storefront
+  // REST API routes
   const api = new Hono();
   
-  // Auth routes
+  // Customer auth routes
   api.route("/auth", authRoutes);
   
-  // Public routes
+  // Admin auth routes
+  api.route("/admin/auth", adminAuthRoutes);
+  
+  // Public storefront routes
   api.route("/products", productRoutes);
   api.route("/categories", categoryRoutes);
   api.route("/cart", cartRoutes);

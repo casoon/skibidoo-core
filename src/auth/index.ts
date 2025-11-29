@@ -2,3 +2,4 @@ export { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToke
 export { hashPassword, verifyPassword } from "./password";
 export { optionalAuth, requireAuth, requireAdmin } from "./middleware";
 export { authRoutes } from "./routes";
+export { adminAuthRoutes } from "./admin-routes";
