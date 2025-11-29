@@ -12,6 +12,7 @@ import { categoryRoutes } from "./routes/categories";
 import { cartRoutes } from "./routes/cart";
 import { checkoutRoutes } from "./routes/checkout";
 import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/payments";
+import { invoiceRoutes } from "@/invoices";
 
 export function createApp() {
   const app = new Hono();
@@ -71,6 +72,9 @@ export function createApp() {
 
   // Payment routes
   api.route("/payments", paymentRoutes);
+
+  // Invoice routes
+  api.route("/invoices", invoiceRoutes);
 
   app.route("/api/v1", api);
 
