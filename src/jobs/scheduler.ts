@@ -17,7 +17,7 @@ const SCHEDULES = {
     pattern: "0 * * * *", // Every hour
     data: { type: "expired_carts" },
   },
-  
+
   // Check low stock every 6 hours
   lowStockCheck: {
     queue: QUEUE_NAMES.STOCK,
@@ -25,7 +25,7 @@ const SCHEDULES = {
     pattern: "0 */6 * * *", // Every 6 hours
     data: { type: "low_stock_alert" },
   },
-  
+
   // Sync stock daily at 3am
   stockSync: {
     queue: QUEUE_NAMES.STOCK,
@@ -33,7 +33,7 @@ const SCHEDULES = {
     pattern: "0 3 * * *", // Daily at 3am
     data: { type: "sync" },
   },
-  
+
   // Cleanup old sessions weekly
   cleanupSessions: {
     queue: QUEUE_NAMES.CLEANUP,
@@ -41,7 +41,7 @@ const SCHEDULES = {
     pattern: "0 4 * * 0", // Sunday at 4am
     data: { type: "old_sessions" },
   },
-  
+
   // Cleanup temp files daily
   cleanupTempFiles: {
     queue: QUEUE_NAMES.CLEANUP,
@@ -49,15 +49,55 @@ const SCHEDULES = {
     pattern: "0 5 * * *", // Daily at 5am
     data: { type: "temp_files" },
   },
+
+  // Sync pending payments every 15 minutes
+  paymentSyncPending: {
+    queue: QUEUE_NAMES.PAYMENT,
+    name: "sync_pending",
+    pattern: "*/15 * * * *", // Every 15 minutes
+    data: { type: "sync_pending", maxAge: 60 },
+  },
+
+  // Payment reconciliation daily at 2am
+  paymentReconcile: {
+    queue: QUEUE_NAMES.PAYMENT,
+    name: "reconcile",
+    pattern: "0 2 * * *", // Daily at 2am
+    data: { type: "reconcile" },
+  },
+
+  // Daily reports at 6am
+  dailyReports: {
+    queue: QUEUE_NAMES.REPORTS,
+    name: "daily",
+    pattern: "0 6 * * *", // Daily at 6am
+    data: { type: "daily" },
+  },
+
+  // Weekly reports on Monday at 7am
+  weeklyReports: {
+    queue: QUEUE_NAMES.REPORTS,
+    name: "weekly",
+    pattern: "0 7 * * 1", // Monday at 7am
+    data: { type: "weekly" },
+  },
+
+  // Monthly reports on 1st at 8am
+  monthlyReports: {
+    queue: QUEUE_NAMES.REPORTS,
+    name: "monthly",
+    pattern: "0 8 1 * *", // 1st of month at 8am
+    data: { type: "monthly" },
+  },
 } as const;
 
 export async function startScheduler() {
   logger.info("Starting scheduler");
-  
+
   // Set up repeatable jobs
   for (const [key, schedule] of Object.entries(SCHEDULES)) {
     const queue = queues[schedule.queue as keyof typeof queues];
-    
+
     // Remove existing repeatable job if exists
     const existingJobs = await queue.getRepeatableJobs();
     for (const job of existingJobs) {
@@ -66,7 +106,7 @@ export async function startScheduler() {
         logger.info({ name: schedule.name }, "Removed existing scheduled job");
       }
     }
-    
+
     // Add new repeatable job
     await queue.add(
       schedule.name,
@@ -77,14 +117,14 @@ export async function startScheduler() {
         removeOnFail: 50,
       }
     );
-    
-    logger.info({ 
-      name: schedule.name, 
+
+    logger.info({
+      name: schedule.name,
       pattern: schedule.pattern,
       queue: schedule.queue,
     }, "Scheduled job added");
   }
-  
+
   logger.info({ jobCount: Object.keys(SCHEDULES).length }, "Scheduler started");
 }
 
@@ -97,7 +137,7 @@ export async function stopScheduler() {
 // List all scheduled jobs
 export async function listScheduledJobs() {
   const allJobs: Array<{ queue: string; name: string; pattern: string; next: Date | null }> = [];
-  
+
   for (const [queueName, queue] of Object.entries(queues)) {
     const repeatableJobs = await queue.getRepeatableJobs();
     for (const job of repeatableJobs) {
@@ -109,6 +149,6 @@ export async function listScheduledJobs() {
       });
     }
   }
-  
+
   return allJobs;
 }

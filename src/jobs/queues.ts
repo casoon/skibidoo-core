@@ -15,6 +15,8 @@ export const QUEUE_NAMES = {
   STOCK: "stock",
   IMPORT: "import",
   CLEANUP: "cleanup",
+  PAYMENT: "payment",
+  REPORTS: "reports",
 } as const;
 
 export type QueueName = typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES];
@@ -26,6 +28,8 @@ export const queues = {
   stock: new Queue(QUEUE_NAMES.STOCK, { connection }),
   import: new Queue(QUEUE_NAMES.IMPORT, { connection }),
   cleanup: new Queue(QUEUE_NAMES.CLEANUP, { connection }),
+  payment: new Queue(QUEUE_NAMES.PAYMENT, { connection }),
+  reports: new Queue(QUEUE_NAMES.REPORTS, { connection }),
 };
 
 // Job data types
@@ -56,6 +60,19 @@ export interface ImportJobData {
 
 export interface CleanupJobData {
   type: "expired_carts" | "old_sessions" | "temp_files";
+}
+
+export interface PaymentSyncJobData {
+  type: "sync_pending" | "sync_single" | "reconcile";
+  orderId?: string;
+  paymentIntentId?: string;
+  maxAge?: number;
+}
+
+export interface ReportsJobData {
+  type: "daily" | "weekly" | "monthly";
+  date?: string;
+  recipients?: string[];
 }
 
 // Add job helper functions
@@ -89,6 +106,20 @@ export async function addImportJob(data: ImportJobData) {
 export async function addCleanupJob(data: CleanupJobData) {
   return queues.cleanup.add(data.type, data, {
     attempts: 1,
+  });
+}
+
+export async function addPaymentSyncJob(data: PaymentSyncJobData) {
+  return queues.payment.add(data.type, data, {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 30000 },
+  });
+}
+
+export async function addReportsJob(data: ReportsJobData) {
+  return queues.reports.add(data.type, data, {
+    attempts: 2,
+    backoff: { type: "exponential", delay: 60000 },
   });
 }
 

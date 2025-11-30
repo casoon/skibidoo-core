@@ -7,6 +7,8 @@ import { processEmailJob } from "./handlers/email";
 import { processInvoiceJob } from "./handlers/invoice";
 import { processStockJob } from "./handlers/stock";
 import { processCleanupJob } from "./handlers/cleanup";
+import { processPaymentSyncJob } from "./handlers/payment-sync";
+import { processReportsJob } from "./handlers/reports";
 
 const connection = new IORedis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -16,12 +18,12 @@ const workers: Worker[] = [];
 
 export async function startWorkers() {
   logger.info("Starting workers");
-  
+
   // Email worker
   const emailWorker = new Worker(
     QUEUE_NAMES.EMAIL,
     processEmailJob,
-    { 
+    {
       connection,
       concurrency: 5,
     }
@@ -33,12 +35,12 @@ export async function startWorkers() {
     logger.error({ jobId: job?.id, error: err }, "Email job failed");
   });
   workers.push(emailWorker);
-  
+
   // Invoice worker
   const invoiceWorker = new Worker(
     QUEUE_NAMES.INVOICE,
     processInvoiceJob,
-    { 
+    {
       connection,
       concurrency: 2,
     }
@@ -50,12 +52,12 @@ export async function startWorkers() {
     logger.error({ jobId: job?.id, error: err }, "Invoice job failed");
   });
   workers.push(invoiceWorker);
-  
+
   // Stock worker
   const stockWorker = new Worker(
     QUEUE_NAMES.STOCK,
     processStockJob,
-    { 
+    {
       connection,
       concurrency: 1,
     }
@@ -67,12 +69,12 @@ export async function startWorkers() {
     logger.error({ jobId: job?.id, error: err }, "Stock job failed");
   });
   workers.push(stockWorker);
-  
+
   // Cleanup worker
   const cleanupWorker = new Worker(
     QUEUE_NAMES.CLEANUP,
     processCleanupJob,
-    { 
+    {
       connection,
       concurrency: 1,
     }
@@ -84,7 +86,41 @@ export async function startWorkers() {
     logger.error({ jobId: job?.id, error: err }, "Cleanup job failed");
   });
   workers.push(cleanupWorker);
-  
+
+  // Payment sync worker
+  const paymentWorker = new Worker(
+    QUEUE_NAMES.PAYMENT,
+    processPaymentSyncJob,
+    {
+      connection,
+      concurrency: 2,
+    }
+  );
+  paymentWorker.on("completed", (job) => {
+    logger.info({ jobId: job.id }, "Payment sync job completed");
+  });
+  paymentWorker.on("failed", (job, err) => {
+    logger.error({ jobId: job?.id, error: err }, "Payment sync job failed");
+  });
+  workers.push(paymentWorker);
+
+  // Reports worker
+  const reportsWorker = new Worker(
+    QUEUE_NAMES.REPORTS,
+    processReportsJob,
+    {
+      connection,
+      concurrency: 1,
+    }
+  );
+  reportsWorker.on("completed", (job) => {
+    logger.info({ jobId: job.id }, "Reports job completed");
+  });
+  reportsWorker.on("failed", (job, err) => {
+    logger.error({ jobId: job?.id, error: err }, "Reports job failed");
+  });
+  workers.push(reportsWorker);
+
   logger.info({ workerCount: workers.length }, "Workers started");
 }
 
