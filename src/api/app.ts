@@ -17,6 +17,7 @@ import { paypalRoutes } from "./routes/paypal";
 import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/payments";
 import { invoiceRoutes } from "@/invoices";
 import { setupSwaggerUI } from "./docs/openapi";
+import { getMetrics } from "@/telemetry";
 import {
   productCache,
   categoryCache,
@@ -28,6 +29,7 @@ import {
   webhookRateLimiter,
   apiSecurityHeaders,
   loginBruteForce,
+  httpMetricsMiddleware,
 } from "./middleware";
 
 export function createApp() {
@@ -51,6 +53,9 @@ export function createApp() {
   // Security headers for all responses
   app.use("*", apiSecurityHeaders);
 
+  // HTTP metrics collection (after security, before routes)
+  app.use("*", httpMetricsMiddleware);
+
   // Development logging
   if (env.NODE_ENV === "development") {
     app.use("*", honoLogger());
@@ -59,6 +64,14 @@ export function createApp() {
   // Health check (no rate limiting)
   app.get("/health", (c) => c.json({ status: "ok", mode: env.MODE }));
   app.get("/health/ready", async (c) => c.json({ status: "ready" }));
+
+  // Prometheus metrics endpoint (no rate limiting, internal use)
+  app.get("/metrics", async (c) => {
+    const metrics = await getMetrics();
+    return c.text(metrics, 200, {
+      "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
+    });
+  });
 
   // API Documentation (Swagger UI) - no rate limiting in dev
   setupSwaggerUI(app);

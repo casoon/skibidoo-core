@@ -29,3 +29,5 @@ export {
   passwordResetBruteForce,
   apiKeyBruteForce,
 } from "./brute-force.js";
+
+export { httpMetricsMiddleware } from "./metrics.js";

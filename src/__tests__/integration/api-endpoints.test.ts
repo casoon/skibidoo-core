@@ -1,8 +1,16 @@
 // API Endpoint Integration Tests
 // src/__tests__/integration/api-endpoints.test.ts
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createApp } from "@/api/app";
+
+interface ApiResponse {
+  status?: string;
+  data?: unknown[];
+  meta?: { page?: number; size?: number };
+  suggestions?: unknown[];
+  error?: { code: string };
+}
 
 describe("API Endpoint Tests", () => {
   const app = createApp();
@@ -11,14 +19,14 @@ describe("API Endpoint Tests", () => {
     it("GET /health should return ok", async () => {
       const res = await app.request("/health");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json.status).toBe("ok");
     });
 
     it("GET /health/ready should return ready", async () => {
       const res = await app.request("/health/ready");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json.status).toBe("ready");
     });
   });
@@ -27,7 +35,7 @@ describe("API Endpoint Tests", () => {
     it("GET /api/v1/products should return product list", async () => {
       const res = await app.request("/api/v1/products");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json).toHaveProperty("data");
       expect(Array.isArray(json.data)).toBe(true);
     });
@@ -35,7 +43,7 @@ describe("API Endpoint Tests", () => {
     it("GET /api/v1/products should support pagination", async () => {
       const res = await app.request("/api/v1/products?page=1&size=10");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json).toHaveProperty("meta");
       expect(json.meta).toHaveProperty("page");
       expect(json.meta).toHaveProperty("size");
@@ -46,7 +54,7 @@ describe("API Endpoint Tests", () => {
     it("GET /api/v1/categories should return category list", async () => {
       const res = await app.request("/api/v1/categories");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json).toHaveProperty("data");
       expect(Array.isArray(json.data)).toBe(true);
     });
@@ -56,14 +64,14 @@ describe("API Endpoint Tests", () => {
     it("GET /api/v1/search should require query param", async () => {
       const res = await app.request("/api/v1/search");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json.data).toEqual([]);
     });
 
     it("GET /api/v1/search?q=test should return results", async () => {
       const res = await app.request("/api/v1/search?q=test");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json).toHaveProperty("data");
       expect(json).toHaveProperty("meta");
     });
@@ -71,7 +79,7 @@ describe("API Endpoint Tests", () => {
     it("GET /api/v1/search/autocomplete should return suggestions", async () => {
       const res = await app.request("/api/v1/search/autocomplete?q=te");
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = await res.json() as ApiResponse;
       expect(json).toHaveProperty("suggestions");
     });
   });
@@ -110,8 +118,8 @@ describe("API Endpoint Tests", () => {
     it("should return 404 for unknown routes", async () => {
       const res = await app.request("/api/v1/nonexistent");
       expect(res.status).toBe(404);
-      const json = await res.json();
-      expect(json.error.code).toBe("NOT_FOUND");
+      const json = await res.json() as ApiResponse;
+      expect(json.error?.code).toBe("NOT_FOUND");
     });
   });
 
