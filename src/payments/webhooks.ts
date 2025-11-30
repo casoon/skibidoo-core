@@ -67,7 +67,7 @@ export async function processWebhookEvent(
  * Get the order ID from event metadata
  */
 export function getOrderIdFromEvent(event: Stripe.Event): string | null {
-  const data = event.data.object as Record<string, unknown>;
+  const data = event.data.object as unknown as Record<string, unknown>;
 
   // Check metadata directly
   if (data.metadata && typeof data.metadata === "object") {
