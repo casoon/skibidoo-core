@@ -16,6 +16,7 @@ import { uploadRoutes } from "./routes/upload";
 import { paypalRoutes } from "./routes/paypal";
 import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/payments";
 import { invoiceRoutes } from "@/invoices";
+import { giftCardRoutes } from "@/giftcards";
 import { setupSwaggerUI } from "./docs/openapi";
 import { getMetrics } from "@/telemetry";
 import {
@@ -135,6 +136,10 @@ export function createApp() {
   // Payment routes - checkout rate limiting
   api.use("/payments/*", checkoutRateLimiter);
   api.route("/payments", paymentRoutes);
+
+  // Gift card routes - general rate limiting
+  api.use("/gift-cards/*", generalRateLimiter);
+  api.route("/gift-cards", giftCardRoutes);
 
   // Invoice routes - general rate limiting
   api.use("/invoices/*", generalRateLimiter);
