@@ -26,6 +26,7 @@ import {
   checkoutRateLimiter,
   webhookRateLimiter,
   apiSecurityHeaders,
+  loginBruteForce,
 } from "./middleware";
 
 export function createApp() {
@@ -86,10 +87,12 @@ export function createApp() {
 
   // Auth routes - strict rate limiting
   api.use("/auth/*", authRateLimiter);
+  api.use("/auth/*", loginBruteForce);
   api.route("/auth", authRoutes);
 
   // Admin auth routes - strict rate limiting
   api.use("/admin/auth/*", authRateLimiter);
+  api.use("/admin/auth/*", loginBruteForce);
   api.route("/admin/auth", adminAuthRoutes);
 
   // Public storefront routes - general rate limiting

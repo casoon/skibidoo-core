@@ -22,3 +22,10 @@ export {
   categoryCache,
   searchCache,
 } from "./cache.js";
+
+export {
+  bruteForceProtection,
+  loginBruteForce,
+  passwordResetBruteForce,
+  apiKeyBruteForce,
+} from "./brute-force.js";
