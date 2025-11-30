@@ -1,0 +1,51 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":preserveSemverRanges"
+  ],
+  "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Berlin",
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+  "packageRules": [
+    {
+      "description": "Group all non-major updates",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch"
+    },
+    {
+      "description": "Automerge patch updates",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Group TypeScript ecosystem",
+      "matchPackagePatterns": ["^typescript", "^@types/"],
+      "groupName": "typescript ecosystem"
+    },
+    {
+      "description": "Group Astro ecosystem",
+      "matchPackagePatterns": ["^astro", "^@astrojs/"],
+      "groupName": "astro ecosystem"
+    },
+    {
+      "description": "Group testing tools",
+      "matchPackagePatterns": ["vitest", "playwright", "@testing-library"],
+      "groupName": "testing tools"
+    },
+    {
+      "description": "Group linting tools",
+      "matchPackagePatterns": ["eslint", "prettier", "biome", "@biomejs"],
+      "groupName": "linting tools"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true
+  }
+}
