@@ -17,6 +17,10 @@ import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/p
 import { invoiceRoutes } from "@/invoices";
 import { setupSwaggerUI } from "./docs/openapi";
 import {
+  productCache,
+  categoryCache,
+  searchCache,
+  etagMiddleware,
   generalRateLimiter,
   authRateLimiter,
   checkoutRateLimiter,
@@ -90,13 +94,18 @@ export function createApp() {
 
   // Public storefront routes - general rate limiting
   api.use("/products/*", generalRateLimiter);
+  api.use("/products/*", productCache);
+  api.use("/products/*", etagMiddleware);
   api.route("/products", productRoutes);
 
   api.use("/categories/*", generalRateLimiter);
+  api.use("/categories/*", categoryCache);
+  api.use("/categories/*", etagMiddleware);
   api.route("/categories", categoryRoutes);
 
   // Search routes - general rate limiting
   api.use("/search/*", generalRateLimiter);
+  api.use("/search/*", searchCache);
   api.route("/search", searchRoutes);
 
   api.use("/cart/*", generalRateLimiter);

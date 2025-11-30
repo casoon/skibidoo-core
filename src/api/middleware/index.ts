@@ -13,3 +13,12 @@ export {
   securityHeaders,
   apiSecurityHeaders,
 } from "./security-headers.js";
+
+export {
+  cacheControl,
+  etagMiddleware,
+  noCache,
+  productCache,
+  categoryCache,
+  searchCache,
+} from "./cache.js";
