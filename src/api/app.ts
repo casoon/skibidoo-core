@@ -13,6 +13,7 @@ import { cartRoutes } from "./routes/cart";
 import { checkoutRoutes } from "./routes/checkout";
 import { searchRoutes } from "./routes/search";
 import { uploadRoutes } from "./routes/upload";
+import { paypalRoutes } from "./routes/paypal";
 import { paymentRoutes, stripeWebhookRoutes, registerDefaultHandlers } from "@/payments";
 import { invoiceRoutes } from "@/invoices";
 import { setupSwaggerUI } from "./docs/openapi";
@@ -129,6 +130,10 @@ export function createApp() {
   // Upload routes - general rate limiting (admin only)
   api.use("/upload/*", generalRateLimiter);
   api.route("/upload", uploadRoutes);
+
+  // PayPal routes - checkout rate limiting
+  api.use("/paypal/*", checkoutRateLimiter);
+  api.route("/paypal", paypalRoutes);
 
   app.route("/api/v1", api);
 

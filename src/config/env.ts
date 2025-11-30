@@ -30,6 +30,11 @@ export const env = createEnv({
     STRIPE_PUBLIC_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
+    // PayPal
+    PAYPAL_CLIENT_ID: z.string().optional(),
+    PAYPAL_CLIENT_SECRET: z.string().optional(),
+    PAYPAL_WEBHOOK_ID: z.string().optional(),
+
     // SMTP / Email
     SMTP_HOST: z.string().default("localhost"),
     SMTP_PORT: z.coerce.number().default(1025),
