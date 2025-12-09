@@ -1,8 +1,9 @@
-// OpenTelemetry Tracing Setup
+// OpenTelemetry Tracing Setup (Bun-compatible)
 // src/telemetry/tracing.ts
 
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { IORedisInstrumentation } from "@opentelemetry/instrumentation-ioredis";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
@@ -36,22 +37,19 @@ export function initTracing(): void {
     url: OTEL_ENDPOINT + "/v1/traces",
   });
 
+  // Use manual instrumentation for Bun compatibility
+  // Auto-instrumentations rely on Node.js-specific internals that may not work with Bun
   sdk = new NodeSDK({
     resource,
     traceExporter,
     instrumentations: [
-      getNodeAutoInstrumentations({
-        "@opentelemetry/instrumentation-fs": { enabled: false },
-        "@opentelemetry/instrumentation-http": {
-          ignoreIncomingRequestHook: (req) => {
-            const url = req.url || "";
-            return url.includes("/health") || url.includes("/metrics");
-          },
-        },
-        "@opentelemetry/instrumentation-pg": {
-          enhancedDatabaseReporting: true,
+      new HttpInstrumentation({
+        ignoreIncomingRequestHook: (req) => {
+          const url = req.url || "";
+          return url.includes("/health") || url.includes("/metrics");
         },
       }),
+      new IORedisInstrumentation(),
     ],
   });
 

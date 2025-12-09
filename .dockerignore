@@ -1,5 +1,7 @@
 # Dependencies
 node_modules
+pnpm-lock.yaml
+pnpm-lock.yaml.backup
 
 # Build output
 dist
@@ -47,3 +49,4 @@ docs
 tsconfig*.json
 vitest.config.*
 drizzle.config.*
+bunfig.toml

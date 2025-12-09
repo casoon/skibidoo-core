@@ -2,7 +2,6 @@
 import { initTracing, shutdownTracing } from "@/telemetry";
 initTracing();
 
-import { serve } from "@hono/node-server";
 import { env, logger } from "@/config";
 import { createApp } from "@/api/app";
 import { closeDatabase } from "@/db";
@@ -34,11 +33,13 @@ async function main() {
   }
 }
 
+let server: ReturnType<typeof Bun.serve> | null = null;
+
 async function startApiServer() {
   const app = createApp();
   const port = env.PORT;
 
-  serve({
+  server = Bun.serve({
     fetch: app.fetch,
     port,
   });
@@ -80,7 +81,12 @@ async function shutdown(signal: string) {
   
   try {
     const mode = env.MODE;
-    
+
+    // Stop API server if running
+    if (server) {
+      server.stop();
+    }
+
     if (mode === "worker" || mode === "scheduler") {
       await stopWorkers();
       if (mode === "scheduler") {
@@ -88,7 +94,7 @@ async function shutdown(signal: string) {
       }
       await closeQueues();
     }
-    
+
     await shutdownTracing();
     await closeDatabase();
     
