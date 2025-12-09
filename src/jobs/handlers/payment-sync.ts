@@ -1,4 +1,5 @@
 import { Job } from "bullmq";
+import type { Logger } from "pino";
 import { logger } from "@/config/logger";
 import { getPaymentIntent } from "@/payments/stripe";
 import { db } from "@/db";
@@ -40,14 +41,14 @@ export async function processPaymentSyncJob(job: Job<PaymentSyncJobData>) {
   }
 }
 
-async function syncPendingPayments(log: ReturnType<typeof logger.child>, maxAgeMinutes = 60) {
+async function syncPendingPayments(log: Logger, maxAgeMinutes = 60) {
   // Find orders with pending payment status older than X minutes
   const cutoffTime = new Date(Date.now() - maxAgeMinutes * 60 * 1000);
 
   const pendingOrders = await db
     .select({
       id: orders.id,
-      paymentIntentId: orders.paymentIntentId,
+      paymentIntentId: orders.paymentReference,
       paymentStatus: orders.paymentStatus,
       createdAt: orders.createdAt,
     })
@@ -117,7 +118,7 @@ async function syncPendingPayments(log: ReturnType<typeof logger.child>, maxAgeM
 }
 
 async function syncSinglePayment(
-  log: ReturnType<typeof logger.child>,
+  log: Logger,
   orderId: string,
   paymentIntentId: string
 ) {
@@ -150,14 +151,14 @@ async function syncSinglePayment(
   return { success: true, updated: false, status: order.paymentStatus };
 }
 
-async function reconcilePayments(log: ReturnType<typeof logger.child>) {
+async function reconcilePayments(log: Logger) {
   // Daily reconciliation: check all orders from last 7 days
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const recentOrders = await db
     .select({
       id: orders.id,
-      paymentIntentId: orders.paymentIntentId,
+      paymentIntentId: orders.paymentReference,
       paymentStatus: orders.paymentStatus,
       total: orders.total,
     })

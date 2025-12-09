@@ -1,45 +1,45 @@
 # syntax=docker/dockerfile:1
 
-# Build stage
-FROM node:24-alpine AS builder
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# ===== Builder Stage =====
+FROM oven/bun:1.1-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json bun.lockb ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install all dependencies
+RUN bun install --frozen-lockfile
 
 # Copy source
 COPY . .
 
 # Build
-RUN pnpm build
+RUN bun run build
 
-# Prune dev dependencies
-RUN pnpm prune --prod
-
-# Production stage
-FROM node:24-alpine AS runner
+# ===== Production Stage =====
+FROM oven/bun:1.1-alpine AS runner
 
 # Add non-root user
-RUN addgroup --system --gid 1001 nodejs &&     adduser --system --uid 1001 skibidoo
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 skibidoo
 
 WORKDIR /app
 
+# Copy package files for production dependencies
+COPY package.json bun.lockb ./
+
+# Install production dependencies only
+RUN bun install --frozen-lockfile --production
+
 # Copy built files
 COPY --from=builder --chown=skibidoo:nodejs /app/dist ./dist
-COPY --from=builder --chown=skibidoo:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=skibidoo:nodejs /app/package.json ./
 
 # Set user
 USER skibidoo
 
 # Environment
+ENV BUN_ENV=production
 ENV NODE_ENV=production
 ENV PORT=3000
 
@@ -47,7 +47,8 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Default command (can be overridden with MODE env var)
-CMD ["node", "dist/index.js"]
+CMD ["bun", "run", "dist/index.js"]

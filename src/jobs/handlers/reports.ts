@@ -1,8 +1,9 @@
 import { Job } from "bullmq";
+import type { Logger } from "pino";
 import { logger } from "@/config/logger";
 import { db } from "@/db";
-import { orders, customers, products } from "@/db/schema";
-import { eq, and, gte, lte, sql, count, sum } from "drizzle-orm";
+import { orders, customers, products, productTranslations } from "@/db/schema";
+import { eq, and, gte, lte, sql, count } from "drizzle-orm";
 import type { ReportsJobData } from "../queues";
 
 export async function processReportsJob(job: Job<ReportsJobData>) {
@@ -55,7 +56,7 @@ interface ReportData {
   averageOrderValue: number;
 }
 
-async function generateDailyReport(log: ReturnType<typeof logger.child>, dateStr?: string) {
+async function generateDailyReport(log: Logger, dateStr?: string) {
   const date = dateStr ? new Date(dateStr) : new Date();
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
@@ -78,7 +79,7 @@ async function generateDailyReport(log: ReturnType<typeof logger.child>, dateStr
   return { success: true, report };
 }
 
-async function generateWeeklyReport(log: ReturnType<typeof logger.child>, dateStr?: string) {
+async function generateWeeklyReport(log: Logger, dateStr?: string) {
   const date = dateStr ? new Date(dateStr) : new Date();
   
   // Get start of week (Monday)
@@ -106,7 +107,7 @@ async function generateWeeklyReport(log: ReturnType<typeof logger.child>, dateSt
   return { success: true, report };
 }
 
-async function generateMonthlyReport(log: ReturnType<typeof logger.child>, dateStr?: string) {
+async function generateMonthlyReport(log: Logger, dateStr?: string) {
   const date = dateStr ? new Date(dateStr) : new Date();
   
   // Get start of month
@@ -137,8 +138,8 @@ async function generateReport(startDate: Date, endDate: Date): Promise<ReportDat
       cancelled: sql<number>`COUNT(CASE WHEN ${orders.status} = 'cancelled' THEN 1 END)`,
       pending: sql<number>`COUNT(CASE WHEN ${orders.status} = 'pending' THEN 1 END)`,
       grossRevenue: sql<number>`COALESCE(SUM(${orders.total}), 0)`,
-      shipping: sql<number>`COALESCE(SUM(${orders.shippingCost}), 0)`,
-      discounts: sql<number>`COALESCE(SUM(${orders.discountAmount}), 0)`,
+      shipping: sql<number>`COALESCE(SUM(${orders.shippingTotal}), 0)`,
+      discounts: sql<number>`COALESCE(SUM(${orders.discountTotal}), 0)`,
     })
     .from(orders)
     .where(
@@ -169,16 +170,23 @@ async function generateReport(startDate: Date, endDate: Date): Promise<ReportDat
       )
     );
 
-  // Low stock products
+  // Low stock products (join with translations for name)
   const lowStockProducts = await db
     .select({
       productId: products.id,
-      name: products.name,
-      stock: products.stock,
+      name: productTranslations.name,
+      stock: products.stockQuantity,
     })
     .from(products)
-    .where(lte(products.stock, 10))
-    .orderBy(products.stock)
+    .leftJoin(
+      productTranslations,
+      and(
+        eq(productTranslations.productId, products.id),
+        eq(productTranslations.locale, "de")
+      )
+    )
+    .where(lte(products.stockQuantity, 10))
+    .orderBy(products.stockQuantity)
     .limit(10);
 
   const grossRevenue = Number(stats.grossRevenue) || 0;
@@ -208,7 +216,7 @@ async function generateReport(startDate: Date, endDate: Date): Promise<ReportDat
       topSelling: [], // TODO: Calculate from order_items
       lowStock: lowStockProducts.map(p => ({
         productId: p.productId,
-        name: p.name,
+        name: p.name ?? "Unknown",
         stock: p.stock,
       })),
     },

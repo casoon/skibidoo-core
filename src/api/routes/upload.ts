@@ -1,5 +1,7 @@
 // Upload API Routes with Image Optimization
 // src/api/routes/upload.ts
+// Note: After migration to Bun/Jimp, AVIF support is removed
+// Consider using cloud-based image transformation (CloudFlare, AWS Lambda) for AVIF/WebP in production
 
 import { Hono } from "hono";
 import { storageService, imageService } from "@/storage";
@@ -7,7 +9,7 @@ import { storageService, imageService } from "@/storage";
 const router = new Hono();
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 // Upload product image with optimization
 router.post("/products/:productId", async (c) => {
@@ -23,7 +25,7 @@ router.post("/products/:productId", async (c) => {
 
   if (!ALLOWED_TYPES.includes(file.type)) {
     return c.json({
-      error: { code: "INVALID_TYPE", message: "Only JPEG, PNG, GIF, WebP, AVIF allowed" }
+      error: { code: "INVALID_TYPE", message: "Only JPEG, PNG, GIF, WebP allowed" }
     }, 400);
   }
 
@@ -34,7 +36,7 @@ router.post("/products/:productId", async (c) => {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  
+
   // Validate image
   const validation = await imageService.validate(buffer);
   if (!validation.valid) {
@@ -50,18 +52,16 @@ router.post("/products/:productId", async (c) => {
     const optimized = await imageService.optimize(buffer, { width: 1920, quality: 85 });
 
     // Upload all versions in parallel
-    const [originalResult, webpResult, avifResult, thumbResult] = await Promise.all([
+    const [originalResult, webpResult, thumbResult] = await Promise.all([
       storageService.upload(baseKey + ".jpg", optimized.original, { contentType: "image/jpeg" }),
-      storageService.upload(baseKey + ".webp", optimized.webp, { contentType: "image/webp" }),
-      storageService.upload(baseKey + ".avif", optimized.avif, { contentType: "image/avif" }),
-      storageService.upload(baseKey + "-thumb.webp", optimized.thumbnailWebp!, { contentType: "image/webp" }),
+      storageService.upload(baseKey + ".png", optimized.webp, { contentType: "image/png" }),
+      storageService.upload(baseKey + "-thumb.png", optimized.thumbnailWebp!, { contentType: "image/png" }),
     ]);
 
     return c.json({
       data: {
         original: { key: originalResult.key, url: originalResult.publicUrl, size: originalResult.size },
         webp: { key: webpResult.key, url: webpResult.publicUrl, size: webpResult.size },
-        avif: { key: avifResult.key, url: avifResult.publicUrl, size: avifResult.size },
         thumbnail: { key: thumbResult.key, url: thumbResult.publicUrl, size: thumbResult.size },
       },
     });
@@ -93,7 +93,7 @@ router.post("/categories/:categoryId", async (c) => {
 
   if (!ALLOWED_TYPES.includes(file.type)) {
     return c.json({
-      error: { code: "INVALID_TYPE", message: "Only JPEG, PNG, GIF, WebP, AVIF allowed" }
+      error: { code: "INVALID_TYPE", message: "Only JPEG, PNG, GIF, WebP allowed" }
     }, 400);
   }
 
@@ -117,17 +117,15 @@ router.post("/categories/:categoryId", async (c) => {
   if (optimize) {
     const optimized = await imageService.optimize(buffer, { width: 1200, quality: 85 });
 
-    const [originalResult, webpResult, avifResult] = await Promise.all([
+    const [originalResult, webpResult] = await Promise.all([
       storageService.upload(baseKey + ".jpg", optimized.original, { contentType: "image/jpeg" }),
-      storageService.upload(baseKey + ".webp", optimized.webp, { contentType: "image/webp" }),
-      storageService.upload(baseKey + ".avif", optimized.avif, { contentType: "image/avif" }),
+      storageService.upload(baseKey + ".png", optimized.webp, { contentType: "image/png" }),
     ]);
 
     return c.json({
       data: {
         original: { key: originalResult.key, url: originalResult.publicUrl, size: originalResult.size },
         webp: { key: webpResult.key, url: webpResult.publicUrl, size: webpResult.size },
-        avif: { key: avifResult.key, url: avifResult.publicUrl, size: avifResult.size },
       },
     });
   } else {
@@ -155,7 +153,7 @@ router.post("/presigned", async (c) => {
 
   if (!ALLOWED_TYPES.includes(contentType)) {
     return c.json({
-      error: { code: "INVALID_TYPE", message: "Only JPEG, PNG, GIF, WebP, AVIF allowed" }
+      error: { code: "INVALID_TYPE", message: "Only JPEG, PNG, GIF, WebP allowed" }
     }, 400);
   }
 

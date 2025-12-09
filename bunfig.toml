@@ -1,0 +1,21 @@
+# Bun configuration
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+# Use frozen lockfile in CI
+frozen = false
+
+[install.lockfile]
+# Save lockfile
+save = true
+
+[test]
+# Test configuration
+coverage = true
+coverageDir = "coverage"
+
+# Preload setup files for tests
+preload = ["./tests/setup.ts"]
+
+# Test file patterns
+root = "./"
