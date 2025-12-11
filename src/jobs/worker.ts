@@ -10,24 +10,34 @@ import { processCleanupJob } from "./handlers/cleanup";
 import { processPaymentSyncJob } from "./handlers/payment-sync";
 import { processReportsJob } from "./handlers/reports";
 
-const connection = new IORedis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-});
+let connection: IORedis | null = null;
+
+function getConnection(): IORedis {
+  if (!env.REDIS_URL) {
+    throw new Error(
+      "REDIS_URL is required for worker mode. Set REDIS_URL or use MODE=api.",
+    );
+  }
+  if (!connection) {
+    connection = new IORedis(env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+    });
+  }
+  return connection;
+}
 
 const workers: Worker[] = [];
 
 export async function startWorkers() {
   logger.info("Starting workers");
 
+  const conn = getConnection();
+
   // Email worker
-  const emailWorker = new Worker(
-    QUEUE_NAMES.EMAIL,
-    processEmailJob,
-    {
-      connection,
-      concurrency: 5,
-    }
-  );
+  const emailWorker = new Worker(QUEUE_NAMES.EMAIL, processEmailJob, {
+    connection: conn,
+    concurrency: 5,
+  });
   emailWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Email job completed");
   });
@@ -37,14 +47,10 @@ export async function startWorkers() {
   workers.push(emailWorker);
 
   // Invoice worker
-  const invoiceWorker = new Worker(
-    QUEUE_NAMES.INVOICE,
-    processInvoiceJob,
-    {
-      connection,
-      concurrency: 2,
-    }
-  );
+  const invoiceWorker = new Worker(QUEUE_NAMES.INVOICE, processInvoiceJob, {
+    connection: conn,
+    concurrency: 2,
+  });
   invoiceWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Invoice job completed");
   });
@@ -54,14 +60,10 @@ export async function startWorkers() {
   workers.push(invoiceWorker);
 
   // Stock worker
-  const stockWorker = new Worker(
-    QUEUE_NAMES.STOCK,
-    processStockJob,
-    {
-      connection,
-      concurrency: 1,
-    }
-  );
+  const stockWorker = new Worker(QUEUE_NAMES.STOCK, processStockJob, {
+    connection: conn,
+    concurrency: 1,
+  });
   stockWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Stock job completed");
   });
@@ -71,14 +73,10 @@ export async function startWorkers() {
   workers.push(stockWorker);
 
   // Cleanup worker
-  const cleanupWorker = new Worker(
-    QUEUE_NAMES.CLEANUP,
-    processCleanupJob,
-    {
-      connection,
-      concurrency: 1,
-    }
-  );
+  const cleanupWorker = new Worker(QUEUE_NAMES.CLEANUP, processCleanupJob, {
+    connection: conn,
+    concurrency: 1,
+  });
   cleanupWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Cleanup job completed");
   });
@@ -88,14 +86,10 @@ export async function startWorkers() {
   workers.push(cleanupWorker);
 
   // Payment sync worker
-  const paymentWorker = new Worker(
-    QUEUE_NAMES.PAYMENT,
-    processPaymentSyncJob,
-    {
-      connection,
-      concurrency: 2,
-    }
-  );
+  const paymentWorker = new Worker(QUEUE_NAMES.PAYMENT, processPaymentSyncJob, {
+    connection: conn,
+    concurrency: 2,
+  });
   paymentWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Payment sync job completed");
   });
@@ -105,14 +99,10 @@ export async function startWorkers() {
   workers.push(paymentWorker);
 
   // Reports worker
-  const reportsWorker = new Worker(
-    QUEUE_NAMES.REPORTS,
-    processReportsJob,
-    {
-      connection,
-      concurrency: 1,
-    }
-  );
+  const reportsWorker = new Worker(QUEUE_NAMES.REPORTS, processReportsJob, {
+    connection: conn,
+    concurrency: 1,
+  });
   reportsWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Reports job completed");
   });
@@ -127,6 +117,8 @@ export async function startWorkers() {
 export async function stopWorkers() {
   logger.info("Stopping workers");
   await Promise.all(workers.map((w) => w.close()));
-  await connection.quit();
+  if (connection) {
+    await connection.quit();
+  }
   logger.info("Workers stopped");
 }

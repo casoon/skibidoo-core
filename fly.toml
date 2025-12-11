@@ -1,0 +1,33 @@
+# fly.toml - Skibidoo Core API
+# https://fly.io/docs/reference/configuration/
+
+app = "skibidoo-core"
+primary_region = "fra"
+
+[build]
+
+[env]
+  MODE = "api"
+  NODE_ENV = "production"
+  PORT = "3000"
+  LOG_LEVEL = "info"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

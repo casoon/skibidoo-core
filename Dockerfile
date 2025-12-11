@@ -1,24 +1,24 @@
 # syntax=docker/dockerfile:1
 
 # ===== Builder Stage =====
-FROM oven/bun:1.1-alpine AS builder
+FROM oven/bun:1.3-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json bun.lockb ./
+# Copy package files and tsconfig
+COPY package.json bun.lock tsconfig.json ./
 
 # Install all dependencies
 RUN bun install --frozen-lockfile
 
 # Copy source
-COPY . .
+COPY src ./src
 
 # Build
 RUN bun run build
 
 # ===== Production Stage =====
-FROM oven/bun:1.1-alpine AS runner
+FROM oven/bun:1.3-alpine AS runner
 
 # Add non-root user
 RUN addgroup --system --gid 1001 nodejs && \
@@ -27,7 +27,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 WORKDIR /app
 
 # Copy package files for production dependencies
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 
 # Install production dependencies only
 RUN bun install --frozen-lockfile --production

@@ -3,10 +3,22 @@ import IORedis from "ioredis";
 import { env } from "@/config/env";
 import { logger } from "@/config/logger";
 
-// Redis connection for BullMQ
-const connection = new IORedis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-});
+// Redis connection for BullMQ (only if REDIS_URL is configured)
+let connection: IORedis | null = null;
+
+function getConnection(): IORedis {
+  if (!env.REDIS_URL) {
+    throw new Error(
+      "REDIS_URL is required for job queues. Set REDIS_URL or use MODE=api.",
+    );
+  }
+  if (!connection) {
+    connection = new IORedis(env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+    });
+  }
+  return connection;
+}
 
 // Queue names
 export const QUEUE_NAMES = {
@@ -19,22 +31,52 @@ export const QUEUE_NAMES = {
   REPORTS: "reports",
 } as const;
 
-export type QueueName = typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES];
+export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 
-// Create queues
-export const queues = {
-  email: new Queue(QUEUE_NAMES.EMAIL, { connection }),
-  invoice: new Queue(QUEUE_NAMES.INVOICE, { connection }),
-  stock: new Queue(QUEUE_NAMES.STOCK, { connection }),
-  import: new Queue(QUEUE_NAMES.IMPORT, { connection }),
-  cleanup: new Queue(QUEUE_NAMES.CLEANUP, { connection }),
-  payment: new Queue(QUEUE_NAMES.PAYMENT, { connection }),
-  reports: new Queue(QUEUE_NAMES.REPORTS, { connection }),
+// Lazy-initialized queues (only created when Redis is available)
+type Queues = {
+  email: Queue;
+  invoice: Queue;
+  stock: Queue;
+  import: Queue;
+  cleanup: Queue;
+  payment: Queue;
+  reports: Queue;
 };
+
+let _queues: Queues | null = null;
+
+export function getQueues(): Queues {
+  if (!_queues) {
+    const conn = getConnection();
+    _queues = {
+      email: new Queue(QUEUE_NAMES.EMAIL, { connection: conn }),
+      invoice: new Queue(QUEUE_NAMES.INVOICE, { connection: conn }),
+      stock: new Queue(QUEUE_NAMES.STOCK, { connection: conn }),
+      import: new Queue(QUEUE_NAMES.IMPORT, { connection: conn }),
+      cleanup: new Queue(QUEUE_NAMES.CLEANUP, { connection: conn }),
+      payment: new Queue(QUEUE_NAMES.PAYMENT, { connection: conn }),
+      reports: new Queue(QUEUE_NAMES.REPORTS, { connection: conn }),
+    };
+  }
+  return _queues;
+}
+
+// Legacy export for backwards compatibility (lazy proxy)
+export const queues = new Proxy({} as Queues, {
+  get(_, prop: keyof Queues) {
+    return getQueues()[prop];
+  },
+});
 
 // Job data types
 export interface EmailJobData {
-  type: "order_confirmation" | "shipping_notification" | "password_reset" | "welcome" | "marketing";
+  type:
+    | "order_confirmation"
+    | "shipping_notification"
+    | "password_reset"
+    | "welcome"
+    | "marketing";
   to: string;
   subject: string;
   templateId: string;
@@ -76,7 +118,10 @@ export interface ReportsJobData {
 }
 
 // Add job helper functions
-export async function addEmailJob(data: EmailJobData, opts?: { delay?: number; priority?: number }) {
+export async function addEmailJob(
+  data: EmailJobData,
+  opts?: { delay?: number; priority?: number },
+) {
   return queues.email.add("send", data, {
     attempts: 3,
     backoff: { type: "exponential", delay: 5000 },
@@ -125,6 +170,10 @@ export async function addReportsJob(data: ReportsJobData) {
 
 // Graceful shutdown
 export async function closeQueues() {
-  await Promise.all(Object.values(queues).map((q) => q.close()));
-  await connection.quit();
+  if (_queues) {
+    await Promise.all(Object.values(_queues).map((q) => q.close()));
+  }
+  if (connection) {
+    await connection.quit();
+  }
 }

@@ -1,5 +1,6 @@
-export { 
-  queues, 
+export {
+  queues,
+  getQueues,
   QUEUE_NAMES,
   addEmailJob,
   addInvoiceJob,

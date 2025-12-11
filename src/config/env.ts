@@ -5,14 +5,16 @@ export const env = createEnv({
   server: {
     // Mode
     MODE: z.enum(["api", "worker", "scheduler"]).default("api"),
-    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
     PORT: z.coerce.number().default(3000),
 
     // Database
     DATABASE_URL: z.string().url(),
 
-    // Redis
-    REDIS_URL: z.string().url(),
+    // Redis (optional - required for worker/scheduler mode and brute-force protection)
+    REDIS_URL: z.string().url().optional(),
 
     // Storage (S3-compatible)
     STORAGE_ENDPOINT: z.string().url().optional(),
@@ -51,7 +53,9 @@ export const env = createEnv({
     CORS_ORIGINS: z.string().optional(),
 
     // Logging
-    LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
+    LOG_LEVEL: z
+      .enum(["trace", "debug", "info", "warn", "error", "fatal"])
+      .default("info"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

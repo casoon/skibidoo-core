@@ -2,11 +2,23 @@ import { Queue } from "bullmq";
 import IORedis from "ioredis";
 import { env } from "@/config/env";
 import { logger } from "@/config/logger";
-import { QUEUE_NAMES, queues } from "./queues";
+import { QUEUE_NAMES, getQueues } from "./queues";
 
-const connection = new IORedis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-});
+let connection: IORedis | null = null;
+
+function getConnection(): IORedis {
+  if (!env.REDIS_URL) {
+    throw new Error(
+      "REDIS_URL is required for scheduler mode. Set REDIS_URL or use MODE=api.",
+    );
+  }
+  if (!connection) {
+    connection = new IORedis(env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+    });
+  }
+  return connection;
+}
 
 // Schedule definitions
 const SCHEDULES = {
@@ -94,6 +106,8 @@ const SCHEDULES = {
 export async function startScheduler() {
   logger.info("Starting scheduler");
 
+  const queues = getQueues();
+
   // Set up repeatable jobs
   for (const [key, schedule] of Object.entries(SCHEDULES)) {
     const queue = queues[schedule.queue as keyof typeof queues];
@@ -108,21 +122,20 @@ export async function startScheduler() {
     }
 
     // Add new repeatable job
-    await queue.add(
-      schedule.name,
-      schedule.data,
-      {
-        repeat: { pattern: schedule.pattern },
-        removeOnComplete: 100,
-        removeOnFail: 50,
-      }
-    );
+    await queue.add(schedule.name, schedule.data, {
+      repeat: { pattern: schedule.pattern },
+      removeOnComplete: 100,
+      removeOnFail: 50,
+    });
 
-    logger.info({
-      name: schedule.name,
-      pattern: schedule.pattern,
-      queue: schedule.queue,
-    }, "Scheduled job added");
+    logger.info(
+      {
+        name: schedule.name,
+        pattern: schedule.pattern,
+        queue: schedule.queue,
+      },
+      "Scheduled job added",
+    );
   }
 
   logger.info({ jobCount: Object.keys(SCHEDULES).length }, "Scheduler started");
@@ -130,14 +143,22 @@ export async function startScheduler() {
 
 export async function stopScheduler() {
   logger.info("Stopping scheduler");
-  await connection.quit();
+  if (connection) {
+    await connection.quit();
+  }
   logger.info("Scheduler stopped");
 }
 
 // List all scheduled jobs
 export async function listScheduledJobs() {
-  const allJobs: Array<{ queue: string; name: string; pattern: string; next: Date | null }> = [];
+  const allJobs: Array<{
+    queue: string;
+    name: string;
+    pattern: string;
+    next: Date | null;
+  }> = [];
 
+  const queues = getQueues();
   for (const [queueName, queue] of Object.entries(queues)) {
     const repeatableJobs = await queue.getRepeatableJobs();
     for (const job of repeatableJobs) {

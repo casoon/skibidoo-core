@@ -46,7 +46,5 @@ docs
 .editorconfig
 .eslintrc*
 .prettierrc*
-tsconfig*.json
 vitest.config.*
 drizzle.config.*
-bunfig.toml
