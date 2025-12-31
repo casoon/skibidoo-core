@@ -34,7 +34,7 @@ const isAuthenticated = middleware(async ({ ctx, next }) => {
 
 // Admin middleware
 const isAdmin = middleware(async ({ ctx, next }) => {
-  if (!ctx.user || ctx.user.role !== "admin") {
+  if (!ctx.user || !["admin", "super_admin"].includes(ctx.user.role)) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
   return next({

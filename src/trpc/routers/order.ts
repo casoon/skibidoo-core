@@ -41,57 +41,67 @@ const updateOrderStatusInput = z.object({
 });
 
 export const orderRouter = router({
-  list: adminProcedure
-    .input(listOrdersInput)
-    .query(async ({ ctx, input }) => {
-      const { page, limit, status, paymentStatus, fulfillmentStatus, customerId, dateFrom, dateTo, sortBy, sortOrder } = input;
-      const offset = (page - 1) * limit;
-      
-      const conditions = [];
-      if (status) conditions.push(eq(orders.status, status));
-      if (paymentStatus) conditions.push(eq(orders.paymentStatus, paymentStatus));
-      if (fulfillmentStatus) conditions.push(eq(orders.fulfillmentStatus, fulfillmentStatus));
-      if (customerId) conditions.push(eq(orders.customerId, customerId));
-      if (dateFrom) conditions.push(gte(orders.createdAt, new Date(dateFrom)));
-      if (dateTo) conditions.push(lte(orders.createdAt, new Date(dateTo)));
-      
-      const orderBy = sortOrder === "desc" 
-        ? desc(orders[sortBy]) 
-        : asc(orders[sortBy]);
-      
-      const [items, countResult] = await Promise.all([
-        ctx.db.query.orders.findMany({
-          where: conditions.length > 0 ? and(...conditions) : undefined,
-          with: {
-            items: true,
-            customer: {
-              columns: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-              },
+  list: adminProcedure.input(listOrdersInput).query(async ({ ctx, input }) => {
+    const {
+      page,
+      limit,
+      status,
+      paymentStatus,
+      fulfillmentStatus,
+      customerId,
+      dateFrom,
+      dateTo,
+      sortBy,
+      sortOrder,
+    } = input;
+    const offset = (page - 1) * limit;
+
+    const conditions = [];
+    if (status) conditions.push(eq(orders.status, status));
+    if (paymentStatus) conditions.push(eq(orders.paymentStatus, paymentStatus));
+    if (fulfillmentStatus)
+      conditions.push(eq(orders.fulfillmentStatus, fulfillmentStatus));
+    if (customerId) conditions.push(eq(orders.customerId, customerId));
+    if (dateFrom) conditions.push(gte(orders.createdAt, new Date(dateFrom)));
+    if (dateTo) conditions.push(lte(orders.createdAt, new Date(dateTo)));
+
+    const orderBy =
+      sortOrder === "desc" ? desc(orders[sortBy]) : asc(orders[sortBy]);
+
+    const [items, countResult] = await Promise.all([
+      ctx.db.query.orders.findMany({
+        where: conditions.length > 0 ? and(...conditions) : undefined,
+        with: {
+          items: true,
+          customer: {
+            columns: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
             },
           },
-          orderBy,
-          limit,
-          offset,
-        }),
-        ctx.db.select({ count: sql<number>`count(*)` })
-          .from(orders)
-          .where(conditions.length > 0 ? and(...conditions) : undefined),
-      ]);
-      
-      return {
-        items,
-        pagination: {
-          page,
-          limit,
-          total: Number(countResult[0]?.count ?? 0),
-          totalPages: Math.ceil(Number(countResult[0]?.count ?? 0) / limit),
         },
-      };
-    }),
+        orderBy,
+        limit,
+        offset,
+      }),
+      ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(orders)
+        .where(conditions.length > 0 ? and(...conditions) : undefined),
+    ]);
+
+    return {
+      items,
+      pagination: {
+        page,
+        limit,
+        total: Number(countResult[0]?.count ?? 0),
+        totalPages: Math.ceil(Number(countResult[0]?.count ?? 0) / limit),
+      },
+    };
+  }),
 
   get: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
@@ -105,11 +115,11 @@ export const orderRouter = router({
           customer: true,
         },
       });
-      
+
       if (!order) {
         throw new Error("Order not found");
       }
-      
+
       return order;
     }),
 
@@ -117,10 +127,13 @@ export const orderRouter = router({
     .input(updateOrderStatusInput)
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
-      
+
       const now = new Date();
-      const updates: Record<string, unknown> = { ...updateData, updatedAt: now };
-      
+      const updates: Record<string, unknown> = {
+        ...updateData,
+        updatedAt: now,
+      };
+
       // Set timestamp based on status changes
       if (updateData.paymentStatus === "paid") {
         updates.paidAt = now;
@@ -134,19 +147,22 @@ export const orderRouter = router({
       if (updateData.status === "cancelled") {
         updates.cancelledAt = now;
       }
-      
+
       const [order] = await ctx.db
         .update(orders)
         .set(updates)
         .where(eq(orders.id, id))
         .returning();
-      
+
       if (!order) {
         throw new Error("Order not found");
       }
-      
-      ctx.logger.info({ orderId: id, updates: updateData }, "Order status updated");
-      
+
+      ctx.logger.info(
+        { orderId: id, updates: updateData },
+        "Order status updated",
+      );
+
       return order;
     }),
 
@@ -161,72 +177,145 @@ export const orderRouter = router({
           taxLines: true,
         },
       });
-      
+
       if (!order) {
         throw new Error("Order not found");
       }
-      
+
       // Generate sequential invoice number
       const lastInvoice = await ctx.db.query.invoices.findFirst({
         orderBy: desc(invoices.createdAt),
         columns: { invoiceNumber: true },
       });
-      
+
       const year = new Date().getFullYear();
       let nextNumber = 1;
-      
+
       if (lastInvoice?.invoiceNumber) {
         const match = lastInvoice.invoiceNumber.match(/RE-(\d{4})-(\d+)/);
         if (match && match[1] === String(year)) {
           nextNumber = parseInt(match[2], 10) + 1;
         }
       }
-      
+
       const invoiceNumber = `RE-${year}-${String(nextNumber).padStart(6, "0")}`;
-      
-      const [invoice] = await ctx.db.insert(invoices).values({
-        orderId: input.orderId,
-        invoiceNumber,
-        data: order,
-        status: "final",
-      }).returning();
-      
-      ctx.logger.info({ invoiceId: invoice.id, invoiceNumber }, "Invoice created");
-      
+
+      const [invoice] = await ctx.db
+        .insert(invoices)
+        .values({
+          orderId: input.orderId,
+          invoiceNumber,
+          data: order,
+          status: "final",
+        })
+        .returning();
+
+      ctx.logger.info(
+        { invoiceId: invoice.id, invoiceNumber },
+        "Invoice created",
+      );
+
       return invoice;
+    }),
+
+  // Create order (admin)
+  create: adminProcedure
+    .input(
+      z.object({
+        orderNumber: z.string(),
+        email: z.string().email(),
+        status: z.string().default("pending"),
+        paymentStatus: z.string().default("pending"),
+        fulfillmentStatus: z.string().default("unfulfilled"),
+        subtotal: z.number().int(),
+        shippingTotal: z.number().int().default(0),
+        taxTotal: z.number().int().default(0),
+        total: z.number().int(),
+        billingAddress: addressSchema,
+        shippingAddress: addressSchema,
+        acceptedTerms: z.boolean().default(true),
+        acceptedCancellationPolicy: z.boolean().default(true),
+        trackingNumber: z.string().optional(),
+        items: z
+          .array(
+            z.object({
+              productId: z.string().uuid(),
+              sku: z.string(),
+              name: z.string(),
+              quantity: z.number().int().default(1),
+              unitPriceNet: z.number().int(),
+              unitPriceGross: z.number().int(),
+              taxRate: z.number().default(19),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { items, ...orderData } = input;
+
+      const [order] = await ctx.db.insert(orders).values(orderData).returning();
+
+      if (items && items.length > 0) {
+        await ctx.db.insert(orderItems).values(
+          items.map((item) => ({
+            orderId: order.id,
+            productId: item.productId,
+            sku: item.sku,
+            name: item.name,
+            quantity: item.quantity,
+            unitPriceNet: item.unitPriceNet,
+            unitPriceGross: item.unitPriceGross,
+            totalNet: item.unitPriceNet * item.quantity,
+            totalGross: item.unitPriceGross * item.quantity,
+            taxRate: item.taxRate,
+            taxAmount: Math.round(
+              (item.unitPriceGross - item.unitPriceNet) * item.quantity,
+            ),
+          })),
+        );
+      }
+
+      ctx.logger.info({ orderId: order.id }, "Order created by admin");
+      return order;
     }),
 
   // Get order statistics
   stats: adminProcedure
-    .input(z.object({
-      dateFrom: z.string().datetime().optional(),
-      dateTo: z.string().datetime().optional(),
-    }))
+    .input(
+      z.object({
+        dateFrom: z.string().datetime().optional(),
+        dateTo: z.string().datetime().optional(),
+      }),
+    )
     .query(async ({ ctx, input }) => {
       const conditions = [];
-      if (input.dateFrom) conditions.push(gte(orders.createdAt, new Date(input.dateFrom)));
-      if (input.dateTo) conditions.push(lte(orders.createdAt, new Date(input.dateTo)));
-      
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-      
+      if (input.dateFrom)
+        conditions.push(gte(orders.createdAt, new Date(input.dateFrom)));
+      if (input.dateTo)
+        conditions.push(lte(orders.createdAt, new Date(input.dateTo)));
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
       const [totalOrders] = await ctx.db
-        .select({ 
+        .select({
           count: sql<number>`count(*)`,
           revenue: sql<number>`sum(total)`,
         })
         .from(orders)
         .where(whereClause);
-      
+
       const [pendingOrders] = await ctx.db
         .select({ count: sql<number>`count(*)` })
         .from(orders)
         .where(and(eq(orders.status, "pending"), whereClause));
-      
+
       const [unpaidOrders] = await ctx.db
         .select({ count: sql<number>`count(*)` })
         .from(orders)
         .where(and(eq(orders.paymentStatus, "pending"), whereClause));
-      
+
       return {
         totalOrders: Number(totalOrders?.count ?? 0),
         revenue: Number(totalOrders?.revenue ?? 0),

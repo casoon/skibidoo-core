@@ -137,7 +137,7 @@ router.post("/login", async (c) => {
     adminUserId: admin.id,
     tokenHash,
     expiresAt,
-    ipAddress: c.req.header("x-forwarded-for") || c.req.header("x-real-ip"),
+    ipAddress: (c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown").slice(0, 45),
     userAgent: c.req.header("user-agent"),
   });
 
@@ -224,7 +224,7 @@ router.post("/refresh", async (c) => {
     adminUserId: admin.id,
     tokenHash: newTokenHash,
     expiresAt,
-    ipAddress: c.req.header("x-forwarded-for") || c.req.header("x-real-ip"),
+    ipAddress: (c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown").slice(0, 45),
     userAgent: c.req.header("user-agent"),
   });
 
