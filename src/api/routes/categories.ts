@@ -7,7 +7,7 @@ const router = new Hono();
 
 // List categories (tree structure)
 router.get("/", async (c) => {
-  const locale = c.req.header("Accept-Language")?.split(",")[0] || "de-DE";
+  const locale = (c.req.header("Accept-Language")?.split(",")[0] || "de-DE").split("-")[0];
   const flat = c.req.query("flat") === "true";
   
   // Get all active categories
@@ -63,7 +63,7 @@ router.get("/", async (c) => {
 // Get category by slug
 router.get("/:slug", async (c) => {
   const slug = c.req.param("slug");
-  const locale = c.req.header("Accept-Language")?.split(",")[0] || "de-DE";
+  const locale = (c.req.header("Accept-Language")?.split(",")[0] || "de-DE").split("-")[0];
   
   const category = await db.query.categories.findFirst({
     where: and(eq(categories.slug, slug), eq(categories.isActive, true)),
@@ -136,7 +136,7 @@ router.get("/:slug", async (c) => {
 // Get products in category
 router.get("/:slug/products", async (c) => {
   const slug = c.req.param("slug");
-  const locale = c.req.header("Accept-Language")?.split(",")[0] || "de-DE";
+  const locale = (c.req.header("Accept-Language")?.split(",")[0] || "de-DE").split("-")[0];
   
   // Pagination
   const query = c.req.query();

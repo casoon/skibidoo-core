@@ -66,7 +66,7 @@ router.get("/", async (c) => {
   }
   
   // Get locale from header or default
-  const locale = c.req.header("Accept-Language")?.split(",")[0] || "de-DE";
+  const locale = (c.req.header("Accept-Language")?.split(",")[0] || "de-DE").split("-")[0];
   
   // Build order by
   const getOrderBy = () => {
@@ -148,7 +148,7 @@ router.get("/", async (c) => {
 // Get single product by slug
 router.get("/:slug", async (c) => {
   const slug = c.req.param("slug");
-  const locale = c.req.header("Accept-Language")?.split(",")[0] || "de-DE";
+  const locale = (c.req.header("Accept-Language")?.split(",")[0] || "de-DE").split("-")[0];
   
   const product = await db.query.products.findFirst({
     where: and(eq(products.slug, slug), eq(products.status, "active")),
@@ -215,7 +215,7 @@ router.get("/:slug", async (c) => {
 // Search products (POST for complex queries)
 router.post("/search", async (c) => {
   const body = await c.req.json();
-  const locale = c.req.header("Accept-Language")?.split(",")[0] || "de-DE";
+  const locale = (c.req.header("Accept-Language")?.split(",")[0] || "de-DE").split("-")[0];
   
   const {
     query: searchQuery,
