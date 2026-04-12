@@ -28,7 +28,7 @@ const createMethodInput = z.object({
   pricePerKg: z.number().int().optional(),
   deliveryTimeId: z.string().uuid().optional(),
   carrierCode: z.string().max(50).optional(),
-  carrierConfig: z.record(z.unknown()).optional(),
+  carrierConfig: z.record(z.string(), z.unknown()).optional(),
   isActive: z.boolean().default(true),
   position: z.number().int().default(0),
 });

@@ -29,14 +29,14 @@ async function seedDemoData() {
       console.log("Created order:", order.orderNumber);
       const product = products[i % products.length];
       const productName = product.translations[0]?.name || product.sku;
-      await db.insert(orderItems).values({ orderId: order.id, productId: product.id, sku: product.sku, name: productName, quantity: 1, unitPriceNet: product.priceNet, unitPriceGross: product.priceGross, totalNet: product.priceNet, totalGross: product.priceGross, taxRate: 19 });
+      await db.insert(orderItems).values({ orderId: order.id, productId: product.id, sku: product.sku, name: productName, quantity: 1, unitPriceNet: product.priceNet, unitPriceGross: product.priceGross, totalNet: product.priceNet, totalGross: product.priceGross, taxRate: 19, taxAmount: Math.round(product.priceNet * 0.19) });
     } catch (e) {
       console.log("Order might exist, skipping:", demoOrders[i].orderNumber);
     }
   }
 
   try {
-    await db.insert(coupons).values({ code: "WELCOME10", type: "percentage", value: 10, minOrderValue: 2000, usageLimit: 100, usageCount: 0, isActive: true, startsAt: new Date(), expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) });
+    await db.insert(coupons).values({ code: "WELCOME10", type: "percentage", value: 10, minPurchase: 2000, usageLimit: 100, usageCount: 0, isActive: true, startsAt: new Date(), expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) });
     console.log("Created coupon: WELCOME10");
   } catch (e) {
     console.log("Coupon might exist, skipping");

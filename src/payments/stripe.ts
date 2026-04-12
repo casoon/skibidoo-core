@@ -10,8 +10,7 @@ export function getStripe(): Stripe {
       throw new Error("STRIPE_SECRET_KEY is not configured");
     }
     stripeInstance = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-11-17.clover",
-      typescript: true,
+      apiVersion: "2026-03-25.dahlia",
     });
   }
   return stripeInstance;
@@ -115,7 +114,8 @@ export async function createCheckoutSession(
 ): Promise<{ sessionId: string; url: string }> {
   const stripe = getStripe();
 
-  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = params.lineItems.map(
+  type LineItem = NonNullable<Stripe.Checkout.SessionCreateParams["line_items"]>[number];
+  const lineItems: LineItem[] = params.lineItems.map(
     (item) => ({
       price_data: {
         currency: "eur",

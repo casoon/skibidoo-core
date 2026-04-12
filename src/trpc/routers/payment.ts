@@ -8,7 +8,7 @@ const createPaymentMethodInput = z.object({
   name: z.string().max(255),
   description: z.string().optional(),
   provider: z.enum(["stripe", "paypal", "klarna", "mollie", "manual", "invoice", "prepayment"]),
-  providerConfig: z.record(z.unknown()).optional(),
+  providerConfig: z.record(z.string(), z.unknown()).optional(),
   isActive: z.boolean().default(true),
   position: z.number().int().default(0),
   minAmount: z.number().int().optional(),
