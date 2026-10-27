@@ -30,7 +30,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install production dependencies only
-RUN bun install --frozen-lockfile --production
+RUN bun install --frozen-lockfile --production --ignore-scripts
 
 # Copy built files
 COPY --from=builder --chown=skibidoo:nodejs /app/dist ./dist

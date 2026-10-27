@@ -1,0 +1,48 @@
+---
+title: Konfiguration
+description: Umgebungsvariablen des Core. Pflichtwerte, Standardwerte und optionale Integrationen.
+order: 2
+---
+
+Die Variablen werden beim Start mit Zod geprüft (`src/config/env.ts`). Fehlt ein Pflichtwert oder
+ist er ungültig, startet der Prozess nicht. Eine Vorlage steht in `.env.example`.
+
+## Kern
+
+| Variable | Standard | Bedeutung |
+| --- | --- | --- |
+| `MODE` | `api` | `api`, `worker` oder `scheduler` |
+| `NODE_ENV` | `development` | `development`, `production` oder `test` |
+| `PORT` | `3000` | HTTP-Port |
+| `DATABASE_URL` | Pflicht | PostgreSQL-Verbindung |
+| `REDIS_URL` | – | Redis; Pflicht für `worker` und `scheduler` |
+| `LOG_LEVEL` | `info` | `trace` bis `fatal` |
+
+## Anmeldung
+
+| Variable | Standard | Bedeutung |
+| --- | --- | --- |
+| `JWT_SECRET` | Pflicht, min. 32 Zeichen | Signatur der Access Tokens |
+| `JWT_REFRESH_SECRET` | – | Signatur der Refresh Tokens, min. 32 Zeichen |
+| `JWT_EXPIRY` | `3600` | Gültigkeit in Sekunden |
+
+## Integrationen (optional)
+
+| Gruppe | Variablen |
+| --- | --- |
+| Stripe | `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| PayPal | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID` |
+| Speicher (S3-kompatibel) | `STORAGE_ENDPOINT`, `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY` |
+| E-Mail (SMTP) | `SMTP_HOST` (`localhost`), `SMTP_PORT` (`1025`), `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` |
+
+## Adressen
+
+| Variable | Bedeutung |
+| --- | --- |
+| `STOREFRONT_URL`, `ADMIN_URL` | Basis für Links in E-Mails |
+| `CORS_ORIGINS` | Erlaubte Ursprünge, kommagetrennt |
+
+<Callout type="caution" title="Geheimnisse">
+Werte wie `JWT_SECRET` und die Zahlungsschlüssel gehören nicht ins Repository. Das Repository
+enthält einen Pre-Commit-Hook mit secretlint (`bun run secretlint`).
+</Callout>
