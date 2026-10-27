@@ -1,0 +1,57 @@
+---
+title: API
+description: Die HTTP-Oberfläche des Core. REST unter /api/v1, tRPC unter /trpc, Swagger UI unter /api/docs.
+order: 1
+---
+
+## REST
+
+Alle REST-Routen hängen unter `/api/v1` (`src/api/app.ts`).
+
+| Pfad | Zweck |
+| --- | --- |
+| `/auth` | Kunden-Anmeldung |
+| `/admin/auth` | Admin-Anmeldung |
+| `/products`, `/categories` | Katalog, mit Cache und ETag |
+| `/search` | Volltextsuche |
+| `/cart` | Warenkorb |
+| `/checkout` | Bestellabschluss |
+| `/payments`, `/paypal` | Zahlungen |
+| `/gift-cards` | Gutscheinkarten |
+| `/invoices` | Rechnungen |
+| `/upload` | Bild-Upload |
+
+Außerhalb von `/api/v1` liegen `/webhooks` (Stripe), `/health`, `/health/ready` und `/metrics`.
+
+Auth- und Login-Routen haben ein eigenes Rate Limit samt Brute-Force-Schutz, Checkout und
+Zahlungen ein mittleres, die übrigen Routen ein allgemeines. Fehler kommen als
+`{ "error": { "code": "…", "message": "…" } }`.
+
+## OpenAPI und Swagger UI
+
+Die Beschreibung liegt in `src/api/docs/openapi.ts` und wird unter `/api/docs/openapi.json`
+ausgeliefert, die Swagger UI unter `/api/docs`.
+
+<Callout type="caution" title="Spezifikation und Routen weichen ab">
+Die OpenAPI-Datei ist von Hand gepflegt. Ihre Pfade (`/api/products`, `/api/orders`, …) stimmen
+nicht durchgehend mit den tatsächlich registrierten Routen unter `/api/v1` überein. Maßgeblich
+ist `src/api/app.ts`.
+</Callout>
+
+## tRPC (Admin)
+
+Der Router hängt unter `/trpc`. Er umfasst diese Teil-Router (`src/trpc/routers/`):
+
+`adminUser`, `category`, `coupon`, `customer`, `deliveryTime`, `order`, `payment`, `product`,
+`shipping`, `tax`
+
+Der Export `@skibidoo/core/trpc` liefert die Typen für typsichere Clients, etwa im Admin.
+
+## Datenmodell
+
+Das Drizzle-Schema (`src/db/schema/`) umfasst unter anderem Produkte und Übersetzungen,
+Kategorien, Warenkörbe, Bestellungen mit Positionen und Steuerzeilen, Rechnungen, Kunden mit
+Adressen und Gruppen, Steuerklassen und -sätze, Versandzonen und -methoden, Zahlungsarten, Coupons,
+Gutscheinkarten, Währungen, Sprachen, Lieferzeiten sowie Admin-Benutzer und -Sitzungen.
+
+Migrationen erzeugt `bun run db:generate`, angewendet werden sie mit `bun run db:migrate`.

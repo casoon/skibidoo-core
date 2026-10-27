@@ -1,0 +1,77 @@
+---
+import {
+  Badge,
+  Badges,
+  CodeBlock,
+  Facts,
+  Features,
+  Hero,
+  Install,
+  Quickstart,
+} from '@casoon/pages-theme/components';
+import Base from '@casoon/pages-theme/layouts/Base.astro';
+
+const modes = `# Eine Codebasis, drei Rollen (Umgebungsvariable MODE)
+MODE=api        # REST, tRPC, Webhooks, /health, /metrics
+MODE=worker     # verarbeitet die BullMQ-Queues
+MODE=scheduler  # legt die wiederkehrenden Jobs an`;
+---
+
+<Base>
+  <Hero
+    title="Ein Shopsystem, dessen Backend ein einzelner Prozess ist."
+    lead="Skibidoo besteht aus einem Core mit REST- und tRPC-API, einer Storefront, einem Admin-Dashboard und einer UI-Bibliothek. Diese Seite dokumentiert den Core und zeigt, wie die Teile zusammenhängen."
+  >
+    <Install
+      commands={[
+        { label: 'bun', command: 'git clone https://github.com/casoon/skibidoo-core && cd skibidoo-core && bun install' },
+      ]}
+    />
+    <Badges>
+      <Badge>MIT</Badge>
+      <Badge>Version 0.1.0</Badge>
+      <Badge>Pre-Release</Badge>
+    </Badges>
+  </Hero>
+
+  <Facts
+    items={[
+      { value: '3', label: 'Betriebsmodi: API, Worker, Scheduler' },
+      { value: '7', label: 'BullMQ-Queues' },
+      { value: '10', label: 'geplante Jobs im Scheduler' },
+      { value: '10', label: 'tRPC-Router für das Admin' },
+    ]}
+  />
+
+  <Features
+    items={[
+      {
+        title: 'Zwei APIs für zwei Aufgaben',
+        body: 'REST unter /api/v1 mit OpenAPI-Beschreibung für den Shop, tRPC unter /trpc mit durchgängigen Typen für das Admin.',
+      },
+      {
+        title: 'Zahlungen, Rechnungen, Mails',
+        body: 'Stripe und PayPal mit Webhooks, Rechnungen als PDF, E-Mails aus MJML-Vorlagen, Hintergrundverarbeitung über BullMQ.',
+      },
+      {
+        title: 'Betrieb ohne Überraschungen',
+        body: 'Umgebungsvariablen werden beim Start mit Zod geprüft. Health-Endpunkte, Prometheus-Metriken und OpenTelemetry-Tracing sind eingebaut.',
+      },
+      {
+        title: 'Getrennte Repositories',
+        body: 'Storefront, Admin, UI, gemeinsame Typen und Infrastruktur leben in eigenen Repositories und sprechen den Core über seine API an.',
+      },
+    ]}
+  />
+
+  <Quickstart
+    lead="Vom Klon zur laufenden API. Voraussetzung sind Bun sowie PostgreSQL und Redis; das Repository skibidoo-infra startet beides per Docker Compose."
+    steps={[
+      '<code>.env.example</code> nach <code>.env</code> kopieren und <code>DATABASE_URL</code> sowie <code>JWT_SECRET</code> setzen.',
+      '<code>bun run db:migrate</code> legt das Schema an.',
+      '<code>bun run dev</code> startet die API auf Port 3000, <code>GET /health</code> antwortet.',
+    ]}
+  >
+    <CodeBlock code={modes} lang="bash" title=".env" label="Betriebsmodi" />
+  </Quickstart>
+</Base>
