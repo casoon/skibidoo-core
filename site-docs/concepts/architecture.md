@@ -15,10 +15,6 @@ Datenbank, Zahlungsanbietern und Mail-Versand spricht.
 | [skibidoo-ui](https://github.com/casoon/skibidoo-ui) | UI-Komponenten, serverseitig gerendert | Astro, Alpine.js, HTMX |
 | [skibidoo-shared](https://github.com/casoon/skibidoo-shared) | Gemeinsame Typen, Zod-Schemas, Hilfsfunktionen | TypeScript |
 | [skibidoo-docs](https://github.com/casoon/skibidoo-docs) | Entwicklerdokumentation | Markdown |
-| [skibidoo-infra](https://github.com/casoon/skibidoo-infra) | Lokale Infrastruktur, Docker, Kubernetes | Docker Compose, Makefile |
-
-Das Konzeptrepository [skibidoo-concept](https://github.com/casoon/skibidoo-concept) beschreibt
-Ziele, Status und offene Fragen des Gesamtprojekts.
 
 ## Schnittstellen
 

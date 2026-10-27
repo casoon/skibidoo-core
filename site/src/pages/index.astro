@@ -65,7 +65,7 @@ MODE=scheduler  # legt die wiederkehrenden Jobs an`;
   />
 
   <Quickstart
-    lead="Vom Klon zur laufenden API. Voraussetzung sind Bun sowie PostgreSQL und Redis; das Repository skibidoo-infra startet beides per Docker Compose."
+    lead="Vom Klon zur laufenden API. Voraussetzung sind Bun sowie PostgreSQL und Redis; die Datei docker-compose.yml im Repository startet beides."
     steps={[
       '<code>.env.example</code> nach <code>.env</code> kopieren und <code>DATABASE_URL</code> sowie <code>JWT_SECRET</code> setzen.',
       '<code>bun run db:migrate</code> legt das Schema an.',

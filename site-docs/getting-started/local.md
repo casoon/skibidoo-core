@@ -11,9 +11,8 @@ order: 1
   `scheduler` Pflicht, siehe [Betriebsmodi](../../concepts/modes/).
 - Optional: Mailpit für E-Mails, MinIO für Uploads
 
-Das Repository [skibidoo-infra](https://github.com/casoon/skibidoo-infra) bringt ein
-Docker-Compose-Setup mit, das PostgreSQL, Redis, Mailpit und MinIO sowie die Skibidoo-Dienste
-startet (`make up`).
+Die `docker-compose.yml` im Repository startet PostgreSQL und Redis sowie den Core in den Modi
+`api`, `worker` und `scheduler` (`docker compose up`).
 
 ## Konfiguration
 
