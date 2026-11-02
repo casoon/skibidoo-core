@@ -9,3 +9,8 @@ All notable changes to this project are documented in this file. The format foll
 
 - **Docs:** Projektseite mit Dokumentation auf GitHub Pages (`site/`, `site-docs/`), die die
   Subdomain skibidoo.casoon.de ersetzt.
+
+### Changed
+
+- **Pages:** the project site uses the current shared theme (0.12.5).
+
