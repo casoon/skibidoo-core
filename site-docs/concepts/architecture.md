@@ -10,8 +10,8 @@ Datenbank, Zahlungsanbietern und Mail-Versand spricht.
 | Repository | Rolle | Technik |
 | --- | --- | --- |
 | [skibidoo-core](https://github.com/casoon/skibidoo-core) | Backend: REST, tRPC, Jobs | Bun, Hono, Drizzle, PostgreSQL, Redis, BullMQ |
-| [skibidoo-storefront](https://github.com/casoon/skibidoo-storefront) | Shop für Kundinnen und Kunden | Astro 6, HTMX, Tailwind CSS 4 |
-| [skibidoo-admin](https://github.com/casoon/skibidoo-admin) | Admin-Dashboard | Astro 6, Alpine.js, Tailwind CSS 4 |
+| [skibidoo-storefront](https://github.com/casoon/skibidoo-storefront) | Shop für Kundinnen und Kunden: Startseite, Kategorien, Produkte, Suche, Warenkorb, Checkout, Kundenkonto | Astro 6, HTMX, Tailwind CSS 4 |
+| [skibidoo-admin](https://github.com/casoon/skibidoo-admin) | Admin-Dashboard: Produkte, Bestellungen, Kunden, Rabatte, Einstellungen zu Versand, Steuern, Zahlungen, E-Mails, Rechtstexten und Benutzern | Astro 6, Alpine.js, Tailwind CSS 4 |
 | [skibidoo-ui](https://github.com/casoon/skibidoo-ui) | UI-Komponenten, serverseitig gerendert | Astro, Alpine.js, HTMX |
 | [skibidoo-shared](https://github.com/casoon/skibidoo-shared) | Gemeinsame Typen, Zod-Schemas, Hilfsfunktionen | TypeScript |
 | [skibidoo-docs](https://github.com/casoon/skibidoo-docs) | Entwicklerdokumentation | Markdown |
@@ -26,7 +26,9 @@ Datenbank, Zahlungsanbietern und Mail-Versand spricht.
 
 Storefront und Admin setzen auf serverseitig gerendertes HTML. Interaktivität kommt aus HTMX
 (Storefront) und Alpine.js (Admin) statt aus einem React-Frontend. Die Konzeptdokumentation
-nennt das AHA-Stack: Astro, HTMX, Alpine.js.
+nennt das AHA-Stack: Astro (Server-Rendering), HTMX (HTML-Fragmente statt JSON), Alpine.js
+(kleine Interaktionen im Browser), dazu Tailwind CSS für das Styling. Das Storefront bindet
+beide Skripte per `unpkg.com` ein.
 
 ## Deployment-Ziele
 
